@@ -1,12 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-#ADD_CUSTOM_COMMAND(
-#  OUTPUT ${CMAKE_SOURCE_DIR}/gen_src/generatedCode.h
-#  COMMAND python tools/GenerateCode.py
-#  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/
-#)
-
-
 ADD_CUSTOM_TARGET(
   generatedCode
   ALL
@@ -21,8 +14,11 @@ SET( source
 )
 
 INCLUDE_DIRECTORIES(
-  gen_src
+  gen_src/
+  3rdparty/cml-1_0_2/
+  include/
 )
 
 ADD_EXECUTABLE( autoneedle ${source} )
+ADD_DEPENDENCIES( autoneedle generatedCode )  
   
