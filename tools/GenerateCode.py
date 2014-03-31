@@ -35,7 +35,9 @@ l1 = (s1.magnitude()-1.0)**2
 l2 = (s2.magnitude()-1.0)**2 
 f = alpha
 
-df_dbx=diff(f, b[0])
+df_dx=diff(f, b[0])
+df_dy=diff(f, b[1])
+df_dz=diff(f, b[2])
 
 # vectors could be something like ["x", "y", "z"]
 def sympyToC( symname, symfunc, vectors=None):
@@ -64,10 +66,17 @@ def sympyToC( symname, symfunc, vectors=None):
 		c_code +=  "  double " +ccode(s[0]) + " = " + ccode(s[1]) + ";\n"
 	c_code +=  "  double r = " + ccode(simple[0])+";\n"
 	c_code +=  "  return r;\n"
-	c_code += "}\n"
+	c_code += "}\n\n"
 	return c_code
 
-code = sympyToC( "df_dx", df_dbx, ["a", "b", "c"] )
+def sympyToCMulti( functions, vectors, prefix = "" ):
+	code = ""
+	for name, symbol in functions:
+		code +=sympyToC( prefix+name, symbol, vectors )
+	return code
+
+code =  sympyToCMulti( [("df_dx", df_dx), ("df_dy", df_dy), ("df_dz", df_dz)], ["a", "b", "c"], prefix = "needle_jacobian_" )
+
 print code
 
 f = open('gen_src/generatedCode.h', 'w')
