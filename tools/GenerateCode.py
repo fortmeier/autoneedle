@@ -46,7 +46,7 @@ code = CodeToC.sympyToCMulti( [("df_dx", df_dx), ("df_dy", df_dy), ("df_dz", df_
 print code
 
 f = open('gen_src/generatedCode.h', 'w')
-f.write("#include \"mathheader.h\">\n\n")
+f.write("#include \"mathheader.h\"\n\n")
 f.write(code)
 
 f.close()
