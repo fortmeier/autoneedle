@@ -83,7 +83,7 @@ void Rendering::setup()
   // setup timer event
   m_interactor->Initialize();
   m_interactor->AddObserver(vtkCommand::TimerEvent, this);
-  m_timerId = m_interactor->CreateRepeatingTimer(100);
+  m_timerId = m_interactor->CreateRepeatingTimer(20);
 
 }
 
