@@ -42,19 +42,30 @@ df_dx=diff(f, b[0])
 df_dy=diff(f, b[1])
 df_dz=diff(f, b[2])
 
-df_dxx=diff(f, b[0], b[0])
-df_dyy=diff(f, b[1], b[1])
-df_dzz=diff(f, b[2], b[2])
+df_dxprev=diff(f, a[0])
+df_dyprev=diff(f, a[1])
+df_dzprev=diff(f, a[2])
 
-df_dxxx=diff(f, b[0], b[0], b[0])
-df_dyyy=diff(f, b[1], b[1], b[1])
-df_dzzz=diff(f, b[2], b[2], b[2])
+df_dxnext=diff(f, c[0])
+df_dynext=diff(f, c[1])
+df_dznext=diff(f, c[2])
+
+#df_dxx=diff(f, b[0], b[0])
+#df_dyy=diff(f, b[1], b[1])
+#df_dzz=diff(f, b[2], b[2])
+
+#df_dxxx=diff(f, b[0], b[0], b[0])
+#df_dyyy=diff(f, b[1], b[1], b[1])
+#df_dzzz=diff(f, b[2], b[2], b[2])
 
 code = CodeToC.sympyToCMulti( [("df_dx", df_dx), ("df_dy", df_dy), ("df_dz", df_dz)], ["a", "b", "c"], prefix = "needle_" )
 
-code += CodeToC.sympyToCMulti( [("df_dxx", df_dxx), ("df_dyy", df_dyy), ("df_dzz", df_dzz)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("df_dxprev", df_dxprev), ("df_dyprev", df_dyprev), ("df_dzprev", df_dzprev)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("df_dxnext", df_dxnext), ("df_dynext", df_dynext), ("df_dznext", df_dznext)], ["a", "b", "c"], prefix = "needle_" )
 
-code += CodeToC.sympyToCMulti( [("df_dxxx", df_dxxx), ("df_dyyy", df_dyyy), ("df_dzzz", df_dzzz)], ["a", "b", "c"], prefix = "needle_" )
+#code += CodeToC.sympyToCMulti( [("df_dxx", df_dxx), ("df_dyy", df_dyy), ("df_dzz", df_dzz)], ["a", "b", "c"], prefix = "needle_" )
+
+#code += CodeToC.sympyToCMulti( [("df_dxxx", df_dxxx), ("df_dyyy", df_dyyy), ("df_dzzz", df_dzzz)], ["a", "b", "c"], prefix = "needle_" )
 
 f = open('gen_src/generatedCode.h', 'w')
 f.write("#include \"mathheader.h\"\n\n")

@@ -14,63 +14,68 @@ std::vector<Vector> a(numNodes);
 
 Rendering* r;
 
-void simulateExplicit()
+void simulateExplicit( double dt )
+{
+  for(int i = 2; i < x.size(); i++)
+  {
+    double m = 0.001;
+
+    if(i != x.size()-1 ) 
+    {
+      Vector fb = Vector(
+         needle_df_dx(x[i-1],x[i],x[i+1]),
+         needle_df_dy(x[i-1],x[i],x[i+1]),
+         needle_df_dz(x[i-1],x[i],x[i+1])
+      );
+      Vector fa = Vector(
+         needle_df_dxnext(x[i-2],x[i-1],x[i]),
+         needle_df_dynext(x[i-2],x[i-1],x[i]),
+         needle_df_dznext(x[i-2],x[i-1],x[i])
+      );
+      Vector fc = Vector(
+         needle_df_dxprev(x[i],x[i+1],x[i+2]),
+         needle_df_dyprev(x[i],x[i+1],x[i+2]),
+         needle_df_dzprev(x[i],x[i+1],x[i+2])
+      );
+
+      f[i] = fa + fb + fc;
+      f[i] *= -1.0;
+    } else {
+      //f[i] = Vector(0,0,0);
+      f[i] = (x[i-1] - x[i]).normalize()*((x[i-1] - x[i]).length() - 1.0) * 0.1;
+    }
+  
+    // double g = 9.81;
+    double g = 9.81;
+
+    f[i] += Vector(0,-1,0) * (m * g);
+ 
+    // damping
+    v[i] *= 0.99;
+ 
+    // explicit update
+    a[i] = f[i] / m * 1.0;
+
+    v[i] = v[i] + a[i] * dt;
+
+    x[i] = x[i] + v[i] * dt;// + a[i] * dt * dt;
+  }
+}
+
+void simulate()
 {
   std::cout<<"updatesimulation"<<std::endl;
 
-  for(int i = 1; i < x.size(); i++)
-{
-  double m = 0.01;
+  double dt = 0.001;
 
-  if(i != x.size()-1 ) 
+  for(int i = 0; i < 10; i++)
   {
-
-  f[i] = Vector(
-     -needle_df_dx(x[i-1],x[i],x[i+1]),
-     -needle_df_dy(x[i-1],x[i],x[i+1]),
-     -needle_df_dz(x[i-1],x[i],x[i+1])
-  );
-  } else {
-    //f[i] = Vector(0,0,0);
-    f[i] = (x[i-1] - x[i]) * 0.1;
+    simulateExplicit(dt);
   }
-  
 
-  f[i] += Vector(0,-1,0) * (m * 9.81);
-  /*
-
-  v[i] = Vector(
-     needle_df_dxx(x[0],x[1],x[2]),
-     needle_df_dyy(x[0],x[1],x[2]),
-     needle_df_dzz(x[0],x[1],x[2])
-  );
-
-  a[i] = Vector(
-     needle_df_dxxx(x[0],x[1],x[2]),
-     needle_df_dyyy(x[0],x[1],x[2]),
-     needle_df_dzzz(x[0],x[1],x[2])
-  );
-  */
-
-
-  double dt = 0.02;
-
-
-  // damping
-  v[i] *= 0.9;
- 
-  // explicit update
-  a[i] = f[i] / m * 1.0;
-
-  v[i] = v[i] + a[i] * dt;
-
-  x[i] = x[i] + v[i] * dt;// + a[i] * dt * dt;
-
-}
-
-  std::cout<<"f: "<<f[1]<<std::endl;
-  std::cout<<"v: "<<v[1]<<std::endl;
-  std::cout<<"a: "<<a[1]<<std::endl;
+  std::cout<<"f: "<<f[5]<<std::endl;
+  std::cout<<"v: "<<v[5]<<std::endl;
+  std::cout<<"a: "<<a[5]<<std::endl;
   r->update(x);
   
 }
@@ -89,7 +94,7 @@ int main()
   }
 
   r->setup();
-  r->setCallback( simulateExplicit );
+  r->setCallback( simulate );
   r->update(x);
   r->run();  
   
