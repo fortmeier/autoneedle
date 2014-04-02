@@ -20,8 +20,6 @@ void simulateExplicit( double dt )
   {
     double m = 0.001;
 
-    if(i != x.size()-1 ) 
-    {
       Vector fb = Vector(
          needle_df_dx(x[i-1],x[i],x[i+1]),
          needle_df_dy(x[i-1],x[i],x[i+1]),
@@ -38,12 +36,19 @@ void simulateExplicit( double dt )
          needle_df_dzprev(x[i],x[i+1],x[i+2])
       );
 
+    if(i != x.size()-1 ) 
+    {
       f[i] = fa + fb + fc;
-      f[i] *= -1.0;
     } else {
-      //f[i] = Vector(0,0,0);
-      f[i] = (x[i-1] - x[i]).normalize()*((x[i-1] - x[i]).length() - 1.0) * 0.1;
+      Vector f2b = Vector(
+         needle_df2_dx(x[i-1],x[i]),
+         needle_df2_dy(x[i-1],x[i]),
+         needle_df2_dz(x[i-1],x[i])
+      );
+      f[i] = fa;// + f2b;
+      std::cout<<f2b<<std::endl;
     }
+    f[i] *= -1.0;
   
     // double g = 9.81;
     double g = 9.81;

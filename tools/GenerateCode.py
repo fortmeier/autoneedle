@@ -38,6 +38,12 @@ l1 = (s1.magnitude()-1.0)**2
 l2 = (s2.magnitude()-1.0)**2 
 f = alpha + l1 + l2
 
+f2 = l1
+
+df2_dx=diff(f2, b[0])
+df2_dy=diff(f2, b[1])
+df2_dz=diff(f2, b[2])
+
 df_dx=diff(f, b[0])
 df_dy=diff(f, b[1])
 df_dz=diff(f, b[2])
@@ -63,6 +69,7 @@ code = CodeToC.sympyToCMulti( [("df_dx", df_dx), ("df_dy", df_dy), ("df_dz", df_
 code += CodeToC.sympyToCMulti( [("df_dxprev", df_dxprev), ("df_dyprev", df_dyprev), ("df_dzprev", df_dzprev)], ["a", "b", "c"], prefix = "needle_" )
 code += CodeToC.sympyToCMulti( [("df_dxnext", df_dxnext), ("df_dynext", df_dynext), ("df_dznext", df_dznext)], ["a", "b", "c"], prefix = "needle_" )
 
+code += CodeToC.sympyToCMulti( [("df2_dx", df2_dx), ("df2_dy", df2_dy), ("df2_dz", df2_dz)], ["a", "b"], prefix = "needle_" )
 #code += CodeToC.sympyToCMulti( [("df_dxx", df_dxx), ("df_dyy", df_dyy), ("df_dzz", df_dzz)], ["a", "b", "c"], prefix = "needle_" )
 
 #code += CodeToC.sympyToCMulti( [("df_dxxx", df_dxxx), ("df_dyyy", df_dyyy), ("df_dzzz", df_dzzz)], ["a", "b", "c"], prefix = "needle_" )
