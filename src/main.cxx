@@ -99,7 +99,7 @@ void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
 
 void simulateImplicit( double dt )
 {
-  int n = (numNodes-3);
+  int n = numNodes;
 
   cml::vectord b(n*3);
   cml::vectord x_old(n*3);
@@ -111,22 +111,38 @@ void simulateImplicit( double dt )
   cml::identity_transform( A );
   for(int i = 0; i < n; i++)
   {
-    if(i<n-1)
-    {
-      A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
-      A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
-      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
+    if(i>0 && i < n-1) {
+      A(i*3 + 0,i*3 + 0) = -needle_df_dx_dx(x[i-1],x[i],x[i+1]); 
+      A(i*3 + 1,i*3 + 1) = -needle_df_dy_dy(x[i-1],x[i],x[i+1]); 
+      A(i*3 + 2,i*3 + 2) = -needle_df_dz_dz(x[i-1],x[i],x[i+1]); 
     }
-    if(i>0)
-    {
-      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxnext(x[i-2+2],x[i-1+2],x[i+0+2]); 
-      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dynext(x[i-2+2],x[i-1+2],x[i+0+2]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dznext(x[i-2+2],x[i-1+2],x[i+0+2]); 
+    if(i>1 && i < n-2) {
+      A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i],x[i+1],x[i+2]); 
+      A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i],x[i+1],x[i+2]); 
+      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i],x[i+1],x[i+2]); 
+      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxnext(x[i-2],x[i-1],x[i]); 
+      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dynext(x[i-2],x[i-1],x[i]); 
+      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dznext(x[i-2],x[i-1],x[i]); 
+ 
     }
-    A(i*3 + 0,i*3 + 0) = -needle_df_dx_dx(x[i-1+2],x[i+2],x[i+1+2]); 
-    A(i*3 + 1,i*3 + 1) = -needle_df_dy_dy(x[i-1+2],x[i+2],x[i+1+2]); 
-    A(i*3 + 2,i*3 + 2) = -needle_df_dz_dz(x[i-1+2],x[i+2],x[i+1+2]); 
-  }
+    if(i==n-2) {
+      A(i*3 + 0,i*3 + 0 + 3) = needle_df2_dx_dx(x[i+1],x[i]); 
+      A(i*3 + 1,i*3 + 1 + 3) = needle_df2_dy_dy(x[i+1],x[i]); 
+      A(i*3 + 2,i*3 + 2 + 3) = needle_df2_dz_dz(x[i+1],x[i]); 
+
+      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxnext(x[i-2],x[i-1],x[i]); 
+      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dynext(x[i-2],x[i-1],x[i]); 
+      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dznext(x[i-2],x[i-1],x[i]); 
+    }
+    if(i==n-1) {
+
+    }
+//    else if(i==0) {
+      //A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[1],x[0]); 
+      //A(i*3 + 1,i*3 + 1) = -needle_df2_dy_dy(x[1],x[0]); 
+      //A(i*3 + 2,i*3 + 2) = -needle_df2_dz_dz(x[1],x[0]); 
+//    } 
+  } 
 
   std::cout<<A<<std::endl;
 
@@ -135,21 +151,31 @@ void simulateImplicit( double dt )
   for(int i = 0; i < n; i++)
   {
     b[i*3 + 0] = 0; 
-    b[i*3 + 1] = 0.0981; 
+    b[i*3 + 1] = -0.0981 * -1.0; 
     b[i*3 + 2] = 0; 
 
-    x_old[i*3 + 0] = x[i+2][0]; 
-    x_old[i*3 + 1] = x[i+2][1]; 
-    x_old[i*3 + 2] = x[i+2][2]; 
+    x_old[i*3 + 0] = x[i][0]; 
+    x_old[i*3 + 1] = x[i][1]; 
+    x_old[i*3 + 2] = x[i][2]; 
 
-    Vector f = -calcF(i+2, true, false, false) * 1.0;
-    //f+= calcF(i+2, false, true, true);
+    Vector f = -calcF(i, true, false, false) * 1.0;
+    //if( i > 1 && i < n-2) f+= calcF(i, false, true, true);
     f_old[i*3 + 0] = f[0]; 
     f_old[i*3 + 1] = f[1]; 
     f_old[i*3 + 2] = f[2]; 
   }
 
+  for(int j = 0; j < 3 * 2; j++) {
+    f_old[j] = 0;
+    b[j] = 0;
+  }
+  for(int j = 0; j < 3 * 1; j++) {
+    f_old[n*3-1-j] = 0;
+    b[n*3-1-j] = 0;
+  }
+
   b = b + A * x_old - f_old;
+
 
 
   // calc r
@@ -168,9 +194,9 @@ void simulateImplicit( double dt )
   // extract x
   for(int i = 0; i < n; i++)
   {
-    x[i+2][0] = r[i*3 + 0];
-    x[i+2][1] = r[i*3 + 1];
-    x[i+2][2] = r[i*3 + 2];
+    x[i][0] = r[i*3 + 0];
+    x[i][1] = r[i*3 + 1];
+    x[i][2] = r[i*3 + 2];
   }
 }
 
@@ -199,7 +225,7 @@ void simulate()
 
   r->update(x);
   //exit(0);
-  
+ 
 }
 
 int main()
