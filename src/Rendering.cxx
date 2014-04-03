@@ -76,8 +76,8 @@ void Rendering::setup()
   renderer->AddActor(actor);
 
   renderer->ResetCamera();
-  renderer->GetActiveCamera()->SetPosition(2,0,10);
-  renderer->GetActiveCamera()->SetFocalPoint(2,0,0);
+  renderer->GetActiveCamera()->SetPosition(5,0,20);
+  renderer->GetActiveCamera()->SetFocalPoint(5,0,0);
   renderer->GetActiveCamera()->Modified();
 
   // setup timer event

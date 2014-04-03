@@ -95,8 +95,8 @@ df_dz_dznext=diff(f, c[2], c[2])
 
 code += CodeToC.sympyToCMulti( [("df_dx_dx", df_dx_dx), ("df_dy_dy", df_dy_dy), ("df_dz_dz", df_dz_dz)], ["a", "b", "c"], prefix = "needle_" )
 
-code += CodeToC.sympyToCMulti( [("df_dx_dxprev", df_dx_dxprev), ("df_dy_dyprev", df_dyprev), ("df_dz_dzprev", df_dz_dzprev)], ["a", "b", "c"], prefix = "needle_" )
-code += CodeToC.sympyToCMulti( [("df_dx_dxnext", df_dxnext), ("df_dy_dynext", df_dynext), ("df_dz_dznext", df_dz_dznext)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("df_dx_dxprev", df_dx_dxprev), ("df_dy_dyprev", df_dy_dyprev), ("df_dz_dzprev", df_dz_dzprev)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("df_dx_dxnext", df_dx_dxnext), ("df_dy_dynext", df_dy_dynext), ("df_dz_dznext", df_dz_dznext)], ["a", "b", "c"], prefix = "needle_" )
 
 code += CodeToC.sympyToCMulti( [("df2_dx_dx", df2_dx_dx), ("df2_dy_dy", df2_dy_dy), ("df2_dz_dz", df2_dz_dz)], ["a", "b"], prefix = "needle_" )
 #code += CodeToC.sympyToCMulti( [("df_dxx", df_dxx), ("df_dyy", df_dyy), ("df_dzz", df_dzz)], ["a", "b", "c"], prefix = "needle_" )

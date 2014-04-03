@@ -73,6 +73,30 @@ void simulateExplicit( double dt )
   }
 }
 
+void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
+{
+  cml::vectord xk = x;
+
+  cml::vectord rp = x;
+
+  cml::vectord rk = b - A * xk;
+  cml::vectord dk = rk;
+
+  double eps = 0.001;
+  do {
+    cml::vectord z = A * dk;
+    double alpha = cml::dot(rk,rk)/cml::dot(dk,z);
+    xk = xk + alpha * dk;
+    cml::vectord rkp = rk - alpha * z;
+    double beta = cml::dot(rkp,rkp)/cml::dot(rk,rk);
+    dk = rkp + beta *dk;
+    rk = rkp;
+
+  } while (rp.length() > eps );
+  x = xk;
+
+}
+
 void simulateImplicit( double dt )
 {
   int n = (numNodes-3);
@@ -87,18 +111,18 @@ void simulateImplicit( double dt )
   cml::identity_transform( A );
   for(int i = 0; i < n; i++)
   {
-    /*if(i<n-1)
+    if(i<n-1)
     {
-      A(i*3 + 0,i*3 + 0 + 3) = -needle_df_dx_dxprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
-      A(i*3 + 1,i*3 + 1 + 3) = -needle_df_dy_dyprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
-      A(i*3 + 2,i*3 + 2 + 3) = -needle_df_dz_dzprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
+      A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
+      A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
+      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i+0+2],x[i+1+2],x[i+2+2]); 
     }
     if(i>0)
     {
-      A(i*3 + 0,i*3 + 0 - 3) = -needle_df_dx_dxnext(x[i-2+2],x[i-1+2],x[i+0+2]); 
-      A(i*3 + 1,i*3 + 1 - 3) = -needle_df_dy_dynext(x[i-2+2],x[i-1+2],x[i+0+2]); 
-      A(i*3 + 2,i*3 + 2 - 3) = -needle_df_dz_dznext(x[i-2+2],x[i-1+2],x[i+0+2]); 
-    }*/
+      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxnext(x[i-2+2],x[i-1+2],x[i+0+2]); 
+      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dynext(x[i-2+2],x[i-1+2],x[i+0+2]); 
+      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dznext(x[i-2+2],x[i-1+2],x[i+0+2]); 
+    }
     A(i*3 + 0,i*3 + 0) = -needle_df_dx_dx(x[i-1+2],x[i+2],x[i+1+2]); 
     A(i*3 + 1,i*3 + 1) = -needle_df_dy_dy(x[i-1+2],x[i+2],x[i+1+2]); 
     A(i*3 + 2,i*3 + 2) = -needle_df_dz_dz(x[i-1+2],x[i+2],x[i+1+2]); 
@@ -118,7 +142,8 @@ void simulateImplicit( double dt )
     x_old[i*3 + 1] = x[i+2][1]; 
     x_old[i*3 + 2] = x[i+2][2]; 
 
-    Vector f = -calcF(i+2, true, false, false);
+    Vector f = -calcF(i+2, true, false, false) * 1.0;
+    //f+= calcF(i+2, false, true, true);
     f_old[i*3 + 0] = f[0]; 
     f_old[i*3 + 1] = f[1]; 
     f_old[i*3 + 2] = f[2]; 
@@ -128,7 +153,14 @@ void simulateImplicit( double dt )
 
 
   // calc r
-  cml::vectord r = inverse(A) * b;
+  cml::vectord r = b * 0;
+  if(false)
+  {
+    cg(A,b,r);
+  } else {
+    r = inverse(A) * b;
+  }
+
   std::cout<<"f_old: "<<f_old<<std::endl;
   std::cout<<"b: "<<b<<std::endl;
   std::cout<<"r: "<<r<<std::endl;
@@ -149,7 +181,7 @@ void simulate()
 
   double dt = 0.001;
 
-  for(int i = 0; i < 1; i++)
+  for(int i = 0; i < 5; i++)
   {
     //simulateExplicit(dt);
     simulateImplicit(dt);
@@ -166,7 +198,7 @@ void simulate()
   }
 
   r->update(x);
-//  exit(0);
+  //exit(0);
   
 }
 
