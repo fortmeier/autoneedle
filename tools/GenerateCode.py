@@ -67,41 +67,28 @@ code += CodeToC.sympyToCMulti( [("df_dxnext", df_dxnext), ("df_dynext", df_dynex
 code += CodeToC.sympyToCMulti( [("df2_dx", df2_dx), ("df2_dy", df2_dy), ("df2_dz", df2_dz)], ["a", "b"], prefix = "needle_" )
 
 
-# 2nd derivative of energy function
-df2_dx_dx=diff(f2, b[0], b[0])
-df2_dy_dy=diff(f2, b[1], b[1])
-df2_dz_dz=diff(f2, b[2], b[2])
+def secondDeriv( func, funcname, var, vectors, postfix =""):
+  code=""
+  syms = ['x','y','z']
+  funcMat = [['','',''],['','',''],['','','']];
+  for i in range(0,3):
+    for j in range(0,3):
+       name='needle_'+funcname+'_d'+syms[i]+'_d'+syms[j]+postfix
+       print "Generating "+name
+       deriv = diff(func, var[i], var[j])
+       code += CodeToC.sympyToC( name, deriv, vectors )
+       funcMat[i][j] = name
 
-df_dx_dx=diff(f, b[0], b[0])
-df_dy_dy=diff(f, b[1], b[1])
-df_dz_dz=diff(f, b[2], b[2])
+  code += CodeToC.sympyMatrixSetter( 'needle_'+funcname+postfix, funcMat, vectors ) 
 
-df_dx_dxprev=diff(f, a[0], a[0])
-df_dy_dyprev=diff(f, a[1], a[1])
-df_dz_dzprev=diff(f, a[2], a[2])
-
-df_dx_dxnext=diff(f, c[0], c[0])
-df_dy_dynext=diff(f, c[1], c[1])
-df_dz_dznext=diff(f, c[2], c[2])
-
-#df_dxx=diff(f, b[0], b[0])
-#df_dyy=diff(f, b[1], b[1])
-#df_dzz=diff(f, b[2], b[2])
-
-#df_dxxx=diff(f, b[0], b[0], b[0])
-#df_dyyy=diff(f, b[1], b[1], b[1])
-#df_dzzz=diff(f, b[2], b[2], b[2])
+  return code
 
 
-code += CodeToC.sympyToCMulti( [("df_dx_dx", df_dx_dx), ("df_dy_dy", df_dy_dy), ("df_dz_dz", df_dz_dz)], ["a", "b", "c"], prefix = "needle_" )
+code += secondDeriv( f2, "df2", b, ["a", "b"] )
+code += secondDeriv( f, "df", b, ["a", "b", "c"] )
+code += secondDeriv( f, "df", a, ["a", "b", "c"], "prev" )
+code += secondDeriv( f, "df", c, ["a", "b", "c"], "next" )
 
-code += CodeToC.sympyToCMulti( [("df_dx_dxprev", df_dx_dxprev), ("df_dy_dyprev", df_dy_dyprev), ("df_dz_dzprev", df_dz_dzprev)], ["a", "b", "c"], prefix = "needle_" )
-code += CodeToC.sympyToCMulti( [("df_dx_dxnext", df_dx_dxnext), ("df_dy_dynext", df_dy_dynext), ("df_dz_dznext", df_dz_dznext)], ["a", "b", "c"], prefix = "needle_" )
-
-code += CodeToC.sympyToCMulti( [("df2_dx_dx", df2_dx_dx), ("df2_dy_dy", df2_dy_dy), ("df2_dz_dz", df2_dz_dz)], ["a", "b"], prefix = "needle_" )
-#code += CodeToC.sympyToCMulti( [("df_dxx", df_dxx), ("df_dyy", df_dyy), ("df_dzz", df_dzz)], ["a", "b", "c"], prefix = "needle_" )
-
-#code += CodeToC.sympyToCMulti( [("df_dxxx", df_dxxx), ("df_dyyy", df_dyyy), ("df_dzzz", df_dzzz)], ["a", "b", "c"], prefix = "needle_" )
 
 f = open('gen_src/generatedCode.h', 'w')
 f.write("#include \"mathheader.h\"\n\n")

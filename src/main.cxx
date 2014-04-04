@@ -114,33 +114,39 @@ void simulateImplicit( double dt )
   for(int i = 0; i < n; i++)
   {
     if(i>1 && i < n-1) {
-      A(i*3 + 0,i*3 + 0) = needle_df_dx_dx(x[i-1],x[i],x[i+1]); 
+      /*A(i*3 + 0,i*3 + 0) = needle_df_dx_dx(x[i-1],x[i],x[i+1]); 
       A(i*3 + 1,i*3 + 1) = needle_df_dy_dy(x[i-1],x[i],x[i+1]); 
-      A(i*3 + 2,i*3 + 2) = needle_df_dz_dz(x[i-1],x[i],x[i+1]); 
+      A(i*3 + 2,i*3 + 2) = needle_df_dz_dz(x[i-1],x[i],x[i+1]); */
+      needle_dfMatrixSetter( i*3, i*3,A, x[i-1],x[i],x[i+1]);
     }
     if(i>1 && i < n) {
-      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxprev(x[i],x[i-1],x[i-2]); 
+      /*A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxprev(x[i],x[i-1],x[i-2]); 
       A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dyprev(x[i],x[i-1],x[i-2]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dzprev(x[i],x[i-1],x[i-2]); 
+      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dzprev(x[i],x[i-1],x[i-2]); */
+      needle_dfprevMatrixSetter( i*3, i*3-3,A, x[i], x[i-1], x[i-2]);
     }
     if(i>1 && i < n-2) {
-      A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i],x[i+1],x[i+2]); 
+      /*A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i],x[i+1],x[i+2]); 
       A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i],x[i+1],x[i+2]); 
-      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i],x[i+1],x[i+2]); 
+      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i],x[i+1],x[i+2]); */
+      needle_dfprevMatrixSetter( i*3, i*3+3,A, x[i], x[i+1], x[i+2]);
  
     }
     if(i==n-1) {
-
+      /*
       A(i*3 + 0 - 3, i*3 + 0) = needle_df2_dx_dx(x[i-1],x[i]); 
       A(i*3 + 1 - 3, i*3 + 1) = needle_df2_dy_dy(x[i-1],x[i]); 
-      A(i*3 + 2 - 3, i*3 + 2) = needle_df2_dz_dz(x[i-1],x[i]);
+      A(i*3 + 2 - 3, i*3 + 2) = needle_df2_dz_dz(x[i-1],x[i]);*/
+      needle_df2MatrixSetter( i*3-3, i*3,A, x[i-1], x[i] );
 
       /*A(i*3 + 0,i*3 + 0 - 3) = needle_df2_dx_dx(x[i-1],x[i]); 
       A(i*3 + 1,i*3 + 1 - 3) = needle_df2_dy_dy(x[i-1],x[i]); 
       A(i*3 + 2,i*3 + 2 - 3) = needle_df2_dz_dz(x[i-1],x[i]);*/
-      A(i*3 + 0,i*3 + 0) = needle_df2_dx_dx(x[i],x[i-1]); 
+      /*A(i*3 + 0,i*3 + 0) = needle_df2_dx_dx(x[i],x[i-1]); 
       A(i*3 + 1,i*3 + 1) = needle_df2_dy_dy(x[i],x[i-1]); 
-      A(i*3 + 2,i*3 + 2) = needle_df2_dz_dz(x[i],x[i-1]);  
+      A(i*3 + 2,i*3 + 2) = needle_df2_dz_dz(x[i],x[i-1]);  */
+      needle_df2MatrixSetter( i*3, i*3,A, x[i], x[i-1] );
+
     } 
 //    else if(i==0) {
       //A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[1],x[0]); 
@@ -239,7 +245,7 @@ void simulate()
 
   double dt = 0.001;
 
-  for(int i = 0; i < 5; i++)
+  for(int i = 0; i < 1; i++)
   {
     //simulateExplicit(dt);
     simulateImplicit(dt);
