@@ -75,26 +75,27 @@ void simulateExplicit( double dt )
 
 void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
 {
-  cml::vectord xk = x;
+  cml::vectord r = b - A * x;
 
-  cml::vectord rp = x;
+  cml::vectord p = r;
 
-  cml::vectord rk = b - A * xk;
-  cml::vectord dk = rk;
+  double rsold=cml::dot(r,r);
+  double rsnew;
 
-  double eps = 0.001;
+  double eps = 0.000001;
+  int i = 0;
   do {
-    cml::vectord z = A * dk;
-    double alpha = cml::dot(rk,rk)/cml::dot(dk,z);
-    xk = xk + alpha * dk;
-    cml::vectord rkp = rk - alpha * z;
-    double beta = cml::dot(rkp,rkp)/cml::dot(rk,rk);
-    dk = rkp + beta *dk;
-    rk = rkp;
+    cml::vectord Ap = A * p;
+    double alpha = rsold/cml::dot(p,Ap);
+    x = x + alpha * p;
+    r = r-alpha*Ap;
+    rsnew = cml::dot(r,r);
+    p=r+p*(rsnew/rsold);
+    rsold=rsnew; 
+    i++;
 
-  } while (rp.length() > eps );
-  x = xk;
-
+  } while (sqrt(rsnew) > eps );
+  std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 }
 
 void simulateImplicit( double dt )
@@ -209,7 +210,7 @@ void simulateImplicit( double dt )
 
   // calc r
   cml::vectord r = b * 0;
-  if(false)
+  if(true)
   {
     cg(A,b,r);
   } else {
