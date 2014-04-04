@@ -34,7 +34,7 @@ s2n=s2/s2.magnitude()
 alpha = acos(dot(s1n,s2n))
 alpha =  1.0 - dot(s1n,s2n)
 beta = (((u1+u3)*0.5) - u2).magnitude() ** 2
-l1 = (s1.magnitude()-1.0)**2 
+l1 = (s1.magnitude()-1.0)**2
 l2 = (s2.magnitude()-1.0)**2 
 f = alpha + l1 + l2
 
