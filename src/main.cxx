@@ -105,9 +105,10 @@ void simulateImplicit( double dt )
   cml::vectord x_old(n*3);
   cml::vectord f_old(n*3);
 
+  double m = 10.0;
 
   // fill A
-  cml::matrixd_r A(n*3+3, n*3);
+  cml::matrixd_r A(n*3, n*3);
   cml::identity_transform( A );
   for(int i = 0; i < n; i++)
   {
@@ -116,39 +117,46 @@ void simulateImplicit( double dt )
       A(i*3 + 1,i*3 + 1) = -needle_df_dy_dy(x[i-1],x[i],x[i+1]); 
       A(i*3 + 2,i*3 + 2) = -needle_df_dz_dz(x[i-1],x[i],x[i+1]); 
     }
-    if(i>1 && i < n) {
-      A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxnext(x[i-2],x[i-1],x[i]); 
-      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dynext(x[i-2],x[i-1],x[i]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dznext(x[i-2],x[i-1],x[i]); 
-    }
     if(i>1 && i < n-1) {
-      A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i],x[i+1],x[i+2]); 
-      A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i],x[i+1],x[i+2]); 
-      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i],x[i+1],x[i+2]); 
- 
+      A(i*3 + 0,i*3 + 0 - 3) = -needle_df_dx_dxprev(x[i-1],x[i],x[i+1]); 
+      A(i*3 + 1,i*3 + 1 - 3) = -needle_df_dy_dyprev(x[i-1],x[i],x[i+1]); 
+      A(i*3 + 2,i*3 + 2 - 3) = -needle_df_dz_dzprev(x[i-1],x[i],x[i+1]); 
     }
-    if(i==n-2) {
-
-      A(i*3 + 0,i*3 + 0 + 3) = needle_df2_dx_dx(x[i],x[i-1]); 
-      A(i*3 + 1,i*3 + 1 + 3) = needle_df2_dy_dy(x[i],x[i-1]); 
-      A(i*3 + 2,i*3 + 2 + 3) = needle_df2_dz_dz(x[i],x[i-1]); 
-
+    if(i>1 && i < n-2) {
+      A(i*3 + 0,i*3 + 0 + 3) = -needle_df_dx_dxprev(x[i+1],x[i],x[i-1]); 
+      A(i*3 + 1,i*3 + 1 + 3) = -needle_df_dy_dyprev(x[i+1],x[i],x[i-1]); 
+      A(i*3 + 2,i*3 + 2 + 3) = -needle_df_dz_dzprev(x[i+1],x[i],x[i-1]); 
+ 
     }
     if(i==n-1) {
 
-      A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[i-1],x[i]); 
-      A(i*3 + 1,i*3 + 1) = -needle_df2_dy_dy(x[i-1],x[i]); 
-      A(i*3 + 2,i*3 + 2) = -needle_df2_dz_dz(x[i-1],x[i]); 
-      A(i*3 + 0 + 3,i*3 + 0) = needle_df_dx_dxnext(x[i-2],x[i-1],x[i]); 
-      A(i*3 + 1 + 3,i*3 + 1) = needle_df_dy_dynext(x[i-2],x[i-1],x[i]); 
-      A(i*3 + 2 + 3,i*3 + 2) = needle_df_dz_dznext(x[i-2],x[i-1],x[i]); 
+      A(i*3 + 0 - 3, i*3 + 0) = -needle_df2_dx_dx(x[i-1],x[i]); 
+      A(i*3 + 1 - 3, i*3 + 1) = -needle_df2_dy_dy(x[i-1],x[i]); 
+      A(i*3 + 2 - 3, i*3 + 2) = -needle_df2_dz_dz(x[i-1],x[i]);
 
-    }
+      A(i*3 + 0,i*3 + 0 - 3) = -needle_df2_dx_dx(x[i-1],x[i]); 
+      A(i*3 + 1,i*3 + 1 - 3) = -needle_df2_dy_dy(x[i-1],x[i]); 
+      A(i*3 + 2,i*3 + 2 - 3) = -needle_df2_dz_dz(x[i-1],x[i]);
+      A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[i],x[i-1]); 
+      A(i*3 + 1,i*3 + 1) = -needle_df2_dy_dy(x[i],x[i-1]); 
+      A(i*3 + 2,i*3 + 2) = -needle_df2_dz_dz(x[i],x[i-1]);  
+    } 
 //    else if(i==0) {
       //A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[1],x[0]); 
       //A(i*3 + 1,i*3 + 1) = -needle_df2_dy_dy(x[1],x[0]); 
       //A(i*3 + 2,i*3 + 2) = -needle_df2_dz_dz(x[1],x[0]); 
-//    } 
+//    }
+    // add mass as damping term
+    if(i>0 && i<n-1) {
+      A(i*3 + 0,i*3 + 0) -= m; 
+      A(i*3 + 1,i*3 + 1) -= m; 
+      A(i*3 + 2,i*3 + 2) -= m; 
+    } else {
+      A(i*3 + 0,i*3 + 0) -= m * 0.5; 
+      A(i*3 + 1,i*3 + 1) -= m * 0.5; 
+      A(i*3 + 2,i*3 + 2) -= m * 0.5; 
+    }
+
   } 
 
   std::cout<<A<<std::endl;
@@ -168,9 +176,9 @@ void simulateImplicit( double dt )
     Vector f;
     if( i > 0 && i < n-1 ) f = -calcF(i, true, false, false) * 1.0;
     if( i == n-1) f = Vector (
-      needle_df2_dx(x[n-2],x[n-1]), 
-      needle_df2_dy(x[n-2],x[n-1]), 
-      needle_df2_dz(x[n-2],x[n-1]) 
+      -needle_df2_dx(x[n-2],x[n-1]), 
+      -needle_df2_dy(x[n-2],x[n-1]), 
+      -needle_df2_dz(x[n-2],x[n-1]) 
     );       
     //if( i > 1 && i < n-2) f+= calcF(i, false, true, true);
     f_old[i*3 + 0] = f[0]; 
@@ -187,7 +195,9 @@ void simulateImplicit( double dt )
     b[n*3-1-j] = 0;
   }
 
-  b = b + A * x_old - f_old;
+  cml::vectord ax = A * x_old;
+
+  b = b + ax - f_old;
 
 
 
@@ -202,6 +212,7 @@ void simulateImplicit( double dt )
 
   std::cout<<"f_old: "<<f_old<<std::endl;
   std::cout<<"b: "<<b<<std::endl;
+  std::cout<<"A * x_old: "<<ax<<std::endl;
   std::cout<<"r: "<<r<<std::endl;
 
   // extract x
@@ -214,6 +225,7 @@ void simulateImplicit( double dt )
 }
 
 
+bool ex = false;
 void simulate()
 {
   std::cout<<"updatesimulation"<<std::endl;
@@ -237,12 +249,14 @@ void simulate()
   }
 
   r->update(x);
-  exit(0);
+  if(ex) exit(0);
  
 }
 
-int main()
+int main(int argi, char** argv)
 {
+
+  if(argi>1) ex = true;
 
   r = new Rendering();
 
