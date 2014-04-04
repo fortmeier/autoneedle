@@ -117,7 +117,7 @@ void simulateImplicit( double dt )
       A(i*3 + 1,i*3 + 1) = needle_df_dy_dy(x[i-1],x[i],x[i+1]); 
       A(i*3 + 2,i*3 + 2) = needle_df_dz_dz(x[i-1],x[i],x[i+1]); 
     }
-    if(i>1 && i < n-1) {
+    if(i>1 && i < n) {
       A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxprev(x[i],x[i-1],x[i-2]); 
       A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dyprev(x[i],x[i-1],x[i-2]); 
       A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dzprev(x[i],x[i-1],x[i-2]); 
@@ -134,9 +134,9 @@ void simulateImplicit( double dt )
       A(i*3 + 1 - 3, i*3 + 1) = needle_df2_dy_dy(x[i-1],x[i]); 
       A(i*3 + 2 - 3, i*3 + 2) = needle_df2_dz_dz(x[i-1],x[i]);
 
-      A(i*3 + 0,i*3 + 0 - 3) = needle_df2_dx_dx(x[i-1],x[i]); 
+      /*A(i*3 + 0,i*3 + 0 - 3) = needle_df2_dx_dx(x[i-1],x[i]); 
       A(i*3 + 1,i*3 + 1 - 3) = needle_df2_dy_dy(x[i-1],x[i]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df2_dz_dz(x[i-1],x[i]);
+      A(i*3 + 2,i*3 + 2 - 3) = needle_df2_dz_dz(x[i-1],x[i]);*/
       A(i*3 + 0,i*3 + 0) = needle_df2_dx_dx(x[i],x[i-1]); 
       A(i*3 + 1,i*3 + 1) = needle_df2_dy_dy(x[i],x[i-1]); 
       A(i*3 + 2,i*3 + 2) = needle_df2_dz_dz(x[i],x[i-1]);  
@@ -152,9 +152,9 @@ void simulateImplicit( double dt )
       A(i*3 + 1,i*3 + 1) += m; 
       A(i*3 + 2,i*3 + 2) += m; 
     } else {
-      A(i*3 + 0,i*3 + 0) += m * 0.5; 
-      A(i*3 + 1,i*3 + 1) += m * 0.5; 
-      A(i*3 + 2,i*3 + 2) += m * 0.5; 
+      A(i*3 + 0,i*3 + 0) += m;1 * 0.5; 
+      A(i*3 + 1,i*3 + 1) += m;1 * 0.5; 
+      A(i*3 + 2,i*3 + 2) += m;1 * 0.5; 
     }
 
   } 
@@ -169,7 +169,7 @@ void simulateImplicit( double dt )
     b[i*3 + 1] = -9.81 * 0.001; 
     b[i*3 + 2] = 0; 
 
-    if(i==n-1) b[i*3+1]*=0.5;
+    //if(i==n-1) b[i*3+1]*=0.5;
 
     x_old[i*3 + 0] = x[i][0]; 
     x_old[i*3 + 1] = x[i][1]; 
@@ -177,12 +177,16 @@ void simulateImplicit( double dt )
 
     Vector f;
     if( i > 0 && i < n-1 ) f = +calcF(i, true, true, true) * 1.0;
-    if( i == n-1) f = Vector (
-      +needle_df2_dx(x[n-2],x[n-1]), 
-      +needle_df2_dy(x[n-2],x[n-1]), 
-      +needle_df2_dz(x[n-2],x[n-1]) 
-    );       
-    //if( i > 1 && i < n-2) f+= calcF(i, false, true, true);
+    if( i == n-1)
+    {
+      f = Vector (
+        needle_df2_dx(x[n-2],x[n-1]), 
+        needle_df2_dy(x[n-2],x[n-1]), 
+        needle_df2_dz(x[n-2],x[n-1]) 
+      );       
+      f += calcF(i, false, true, false);
+    }
+    
     f_old[i*3 + 0] = f[0]; 
     f_old[i*3 + 1] = f[1]; 
     f_old[i*3 + 2] = f[2]; 
