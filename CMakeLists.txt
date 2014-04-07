@@ -4,13 +4,23 @@ FIND_PACKAGE(VTK REQUIRED)
 
 INCLUDE(${VTK_USE_FILE})
 
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT
+  ${PROJECT_SOURCE_DIR}/gen_src/generatedCode.h
+  COMMAND
+  python ${PROJECT_SOURCE_DIR}/tools/GenerateCode.py
+  WORKING_DIRECTORY
+  ${PROJECT_SOURCE_DIR}/
+  DEPENDS
+  ${PROJECT_SOURCE_DIR}/tools/GenerateCode.py
+)
+
 ADD_CUSTOM_TARGET(
   generatedCode
   ALL
-  COMMAND python tools/GenerateCode.py
   DEPENDS 
-  tools/GenerateCode.py
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/gen_src/generatedCode.h
 )
 
 SET( source
