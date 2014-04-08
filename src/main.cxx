@@ -237,6 +237,165 @@ void simulateImplicit( double dt )
   }
 }
 
+/*
+  compute with method of [1]:
+  1. Chentanez N, Alterovitz R, Ritchie D, Cho L, Hauser KK, Goldberg K, et al. 
+  Interactive simulation of surgical needle insertion and steering. 
+  ACM Trans Graph;28(3):1-10. Available from: http://portal.acm.org/citation.cfm?id=1531394
+
+  result should be in the form A ap = b with
+
+  A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
+  b = F + dF_dx * dt * v + dF_dx * dt**2 * ( 0.5 - beta) * a + dF_dv * dt * (1-gamma) * a
+   ?= F + dF_dx * ( dt * v + dt**2 * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
+   ?= F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
+
+*/
+
+  cml::vectord xo(numNodes*3); // positions from last step
+  cml::vectord vo(numNodes*3); // velocities from last step
+  cml::vectord ao(numNodes*3); // accelerations from last step
+
+
+void simulateImplicitChentanez( double dt )
+{
+  int n = numNodes;
+
+  cml::vectord F(n*3); // sum of forces
+  //cml::vectord xp(n*3); // new positions
+  //cml::vectord vp(n*3); // new velocities
+  cml::vectord ap(n*3); // new accelerations, thats what we solve the LSE for
+
+  cml::matrixd_r dF_dx(n*3, n*3); // Jacobian of force with respect to position
+  cml::matrixd_r dF_dv(n*3, n*3); // Jacobian of force with respect to velocity
+
+
+  cml::matrixd_r A(n*3, n*3); // resulting matrix for LSE
+  cml::vectord b(n*3); // resulting vector for LSE
+
+  double m = 10.0;
+
+  double beta = 0.25;
+  double gamma = 0.5;
+
+
+  // fill the Jacobian dF_dx
+  for(int i = 0; i < n; i++)
+  {
+    if(i>1 && i < n-1) {
+      needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
+    }
+    if(i>1 && i < n) {
+      needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i], x[i-1], x[i-2]);
+    }
+    if(i>1 && i < n-2) {
+      needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2]);
+ 
+    }
+    if(i==n-1) {
+      needle_df2MatrixSetter( i*3-3, i*3, dF_dx, x[i-1], x[i] );
+      needle_df2MatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1] );
+    } 
+  } 
+
+  std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
+  dF_dx *= 0.0;
+
+  // fill the Jacobian dF_dv
+  /*
+  for(int i = 0; i < n; i++)
+  {
+    if(i>1 && i < n-1) {
+      needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
+    }
+    if(i>1 && i < n) {
+      needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i], x[i-1], x[i-2]);
+    }
+    if(i>1 && i < n-2) {
+      needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2]);
+ 
+    }
+    if(i==n-1) {
+      needle_df2MatrixSetter( i*3-3, i*3, dF_dx, x[i-1], x[i] );
+      needle_df2MatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1] );
+    } 
+  }*/
+
+  dF_dv.zero();
+
+  std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
+
+  // fill A: A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
+  cml::identity_transform( A );
+  A = A * m;
+  A = A - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
+
+  std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
+
+  // fill b: F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
+  // but first, F
+  F.zero();
+  for(int i = 0; i < n; i++)
+  {
+    Vector f(0,-9.81,0);
+    /*
+    if( i > 1 && i < n-1 ) f = +calcF(i, true, true, true) * 1.0;
+    if( i == n-1)
+    {
+      f += Vector (
+        needle_df2_dx(x[n-2],x[n-1]), 
+        needle_df2_dy(x[n-2],x[n-1]), 
+        needle_df2_dz(x[n-2],x[n-1]) 
+      );       
+      f += calcF(i, false, true, false);
+    }
+    */
+    F[i*3 + 0] = f[0]; 
+    F[i*3 + 1] = f[1]; 
+    F[i*3 + 2] = f[2]; 
+  }
+
+  std::cout<<"F: "<<F<<std::endl;
+
+  b = F + dt * dF_dx * ( vo + dt * ( 0.5 - beta) * ao ) + dF_dv * dt * (1-gamma) * ao;
+
+  std::cout<<"b: "<<b<<std::endl;
+
+  if(false)
+  {
+    cg(A,b,ap);
+  } else {
+    ap = inverse(A) * b;
+  }
+
+  std::cout<<"A^-1 * b = ap = "<<ap<<std::endl;
+
+  // update x and v for next iteration
+  /////////////////////////////////////////////////////////
+
+  // update std::vector x (giving x_plus)
+  for(int i = 0; i < n; i++)
+  {
+    x[i][0] += dt * v[i][0] + dt*dt*((0.5-beta)*a[i][0] + beta*ap[i*3 + 0]);
+    x[i][1] += dt * v[i][1] + dt*dt*((0.5-beta)*a[i][1] + beta*ap[i*3 + 1]);
+    x[i][2] += dt * v[i][2] + dt*dt*((0.5-beta)*a[i][2] + beta*ap[i*3 + 2]);
+  }
+  // update std::vector v (giving v_plus)
+  for(int i = 0; i < n; i++)
+  {
+    v[i][0] += dt*((1.0-gamma)*a[i][0] + gamma*ap[i*3 + 0]);
+    v[i][1] += dt*((1.0-gamma)*a[i][1] + gamma*ap[i*3 + 1]);
+    v[i][2] += dt*((1.0-gamma)*a[i][2] + gamma*ap[i*3 + 2]);
+  }
+  // update std::vector a (giving a_plus)
+  for(int i = 0; i < n; i++)
+  {
+    a[i][0] += ap[i*3 + 0];
+    a[i][1] += ap[i*3 + 1];
+    a[i][2] += ap[i*3 + 2];
+  }
+}
+
 
 bool ex = false;
 void simulate()
@@ -248,7 +407,8 @@ void simulate()
   for(int i = 0; i < 1; i++)
   {
     //simulateExplicit(dt);
-    simulateImplicit(dt);
+    //simulateImplicit(dt);
+    simulateImplicitChentanez(dt);
 
   for(int i = 0; i < numNodes; i++)
   {
