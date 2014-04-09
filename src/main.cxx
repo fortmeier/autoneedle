@@ -216,7 +216,7 @@ void simulateImplicit( double dt )
 
   // calc r
   cml::vectord r = b * 0;
-  if(true)
+  if(false)
   {
     cg(A,b,r);
   } else {
@@ -252,14 +252,29 @@ void simulateImplicit( double dt )
 
 */
 
-  cml::vectord xo(numNodes*3); // positions from last step
-  cml::vectord vo(numNodes*3); // velocities from last step
-  cml::vectord ao(numNodes*3); // accelerations from last step
+
 
 
 void simulateImplicitChentanez( double dt )
 {
   int n = numNodes;
+
+  cml::vectord xo(numNodes*3); // positions from last step
+  cml::vectord vo(numNodes*3); // velocities from last step
+  cml::vectord ao(numNodes*3); // accelerations from last step
+
+  for(int i = 0; i < n; i++)
+  {
+    xo[i*3+0]=x[i][0];
+    xo[i*3+1]=x[i][1];
+    xo[i*3+2]=x[i][2];
+    vo[i*3+0]=v[i][0];
+    vo[i*3+1]=v[i][1];
+    vo[i*3+2]=v[i][2];
+    ao[i*3+0]=a[i][0];
+    ao[i*3+1]=a[i][1];
+    ao[i*3+2]=a[i][2];
+  }
 
   cml::vectord F(n*3); // sum of forces
   //cml::vectord xp(n*3); // new positions
@@ -268,16 +283,24 @@ void simulateImplicitChentanez( double dt )
 
   cml::matrixd_r dF_dx(n*3, n*3); // Jacobian of force with respect to position
   cml::matrixd_r dF_dv(n*3, n*3); // Jacobian of force with respect to velocity
+  cml::matrixd_r M(n*3, n*3); // Jacobian of force with respect to velocity
 
 
   cml::matrixd_r A(n*3, n*3); // resulting matrix for LSE
   cml::vectord b(n*3); // resulting vector for LSE
 
-  double m = 10.0;
+  double m = 0.001;
 
   double beta = 0.25;
   double gamma = 0.5;
 
+  // mass matrix
+  cml::identity_transform( M );
+  M = M * m;
+  //M(3*(n-1)+0,3*(n-1)+0) *=0.5;
+  //M(3*(n-1)+1,3*(n-1)+1) *=0.5;
+  //M(3*(n-1)+2,3*(n-1)+2) *=0.5;
+  std::cout<<"M"<<M<<std::endl;
 
   // fill the Jacobian dF_dx
   for(int i = 0; i < n; i++)
@@ -285,21 +308,23 @@ void simulateImplicitChentanez( double dt )
     if(i>1 && i < n-1) {
       needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
     }
-    if(i>1 && i < n) {
-      needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i], x[i-1], x[i-2]);
+    if(i>1 && i < n-1) {
+      needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i+1], x[i], x[i-1]);
     }
-    if(i>1 && i < n-2) {
-      needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2]);
- 
+    if(i>1 && i < n-1) {
+      needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
     }
     if(i==n-1) {
-      needle_df2MatrixSetter( i*3-3, i*3, dF_dx, x[i-1], x[i] );
-      needle_df2MatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1] );
-    } 
+      //needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i], x[i-1], x[i-2]);
+      //needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1], x[i-2]);
+      //needle_dfMatrixSetter( i*3+3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
+      //needle_df2MatrixSetter( i*3+3, i*3, dF_dx, x[i], x[i+1] );
+      //needle_df2MatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1] );
+    }
   } 
 
+  dF_dx *= 1.0;
   std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
-  dF_dx *= 0.0;
 
   // fill the Jacobian dF_dv
   /*
@@ -321,14 +346,14 @@ void simulateImplicitChentanez( double dt )
     } 
   }*/
 
+
+  dF_dv = 0.0 * M - 0.005 * dF_dx;
   dF_dv.zero();
 
   std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
 
   // fill A: A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
-  cml::identity_transform( A );
-  A = A * m;
-  A = A - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
+  A = M - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
 
   std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
 
@@ -337,19 +362,14 @@ void simulateImplicitChentanez( double dt )
   F.zero();
   for(int i = 0; i < n; i++)
   {
-    Vector f(0,-9.81,0);
-    /*
-    if( i > 1 && i < n-1 ) f = +calcF(i, true, true, true) * 1.0;
-    if( i == n-1)
-    {
-      f += Vector (
-        needle_df2_dx(x[n-2],x[n-1]), 
-        needle_df2_dy(x[n-2],x[n-1]), 
-        needle_df2_dz(x[n-2],x[n-1]) 
-      );       
-      f += calcF(i, false, true, false);
-    }
-    */
+    Vector f(0,0,0);
+
+    if( i > 1 && i < n-1 ) f = +calcF(i, true, false, false) * -1.0;
+    //if( i > 1 && i < n-1 ) f = +calcF(i, false, true, false) * -1.0;
+    //if( i > 1 && i < n-2 ) f = +calcF(i, false, false, true) * -1.0;
+
+    if( i > 1 ) f[1] += -9.81 * M(i*3+1,i*3+1);
+
     F[i*3 + 0] = f[0]; 
     F[i*3 + 1] = f[1]; 
     F[i*3 + 2] = f[2]; 
@@ -357,7 +377,13 @@ void simulateImplicitChentanez( double dt )
 
   std::cout<<"F: "<<F<<std::endl;
 
-  b = F + dt * dF_dx * ( vo + dt * ( 0.5 - beta) * ao ) + dF_dv * dt * (1-gamma) * ao;
+  cml::vectord b1 = dt * dF_dx * ( vo + dt * ( 0.5 - beta) * ao );
+  cml::vectord b2 = dF_dv * dt * (1.0-gamma) * ao;
+
+  std::cout<<"b1: "<<b1<<std::endl;
+  std::cout<<"b2: "<<b2<<std::endl;
+
+  b = F + b1 + b2;
 
   std::cout<<"b: "<<b<<std::endl;
 
@@ -369,6 +395,24 @@ void simulateImplicitChentanez( double dt )
   }
 
   std::cout<<"A^-1 * b = ap = "<<ap<<std::endl;
+
+
+  // length enforcement
+  bool useEnforcement = false;
+  
+  if(useEnforcement) 
+  {
+  for(int i = 1; i < n; i++)
+  {
+    Vector N = x[i]-x[i-1];
+    Vector aa(ap[i*3+0], ap[i*3+1], ap[i*3+2]); 
+    N.normalize();
+    Vector p = cml::dot(N,aa) * N;
+    ap[i*3 + 0] -= p[0];
+    ap[i*3 + 1] -= p[1];
+    ap[i*3 + 2] -= p[2];
+  }
+  }  
 
   // update x and v for next iteration
   /////////////////////////////////////////////////////////
@@ -390,22 +434,46 @@ void simulateImplicitChentanez( double dt )
   // update std::vector a (giving a_plus)
   for(int i = 0; i < n; i++)
   {
-    a[i][0] += ap[i*3 + 0];
-    a[i][1] += ap[i*3 + 1];
-    a[i][2] += ap[i*3 + 2];
+    a[i][0] = ap[i*3 + 0];
+    a[i][1] = ap[i*3 + 1];
+    a[i][2] = ap[i*3 + 2];
   }
+
+  // length enforcement
+  if(useEnforcement) 
+  {
+  for(int i = 1; i < n; i++)
+  {
+    Vector N = x[i]-x[i-1];
+    N.normalize();
+    Vector p = cml::dot(N,v[i]) * N;
+    v[i] -= p;
+
+    double l = 1.0;
+    x[i] -= N * ((x[i]-x[i-1]).length() - l);
+    
+  }
+ 
+  }
+  for(int i = 1; i < n; i++)
+  {
+    a[i] *= 0.99;
+    v[i] *= 0.99;
+  } 
 }
 
 
 bool ex = false;
 void simulate()
 {
-  std::cout<<"updatesimulation"<<std::endl;
 
-  double dt = 0.001;
+  double dt = 0.01;
 
-  for(int i = 0; i < 1; i++)
+  static int c = 0;
+
+  for(int i = 0; i < 1 && c < 300; i++)
   {
+    c++;
     //simulateExplicit(dt);
     //simulateImplicit(dt);
     simulateImplicitChentanez(dt);

@@ -20,6 +20,13 @@ u1=(u.x*a[0] + u.y*a[1] + u.z*a[2])
 u2=(u.x*b[0] + u.y*b[1] + u.z*b[2])
 u3=(u.x*c[0] + u.y*c[1] + u.z*c[2])
 
+m1=(u.y*1)
+m2=(u.z*1)
+
+tt= u3/2 + u1/2 - u2
+w1=dot(tt,m1)
+w2=dot(tt,m2)
+
 #s1=(u1-u2).normalize()
 #s2=(u2-u3).normalize()
 #v=cross(s1, s2)
@@ -31,12 +38,25 @@ s2=(u2-u3)
 s1n=s1/s1.magnitude()
 s2n=s2/s2.magnitude()
 
-alpha = acos(dot(s1n,s2n))
+k1 = 1
+k2 = 0
+
+e0 = u2-u1
+e1 = u3-u2
+
+e0d = u.x
+e1d = u.x
+
+
+kbi = (2 * cross(e0, e1)) / (e0d.magnitude()*e1d.magnitude() + e0.dot(e1))
+
+#alpha = acos(dot(s1n,s2n))
 alpha =  1.0 - dot(s1n,s2n)
 beta = (((u1+u3)*0.5) - u2).magnitude() ** 2
-l1 = (s1.magnitude()-1.0)**2
-l2 = (s2.magnitude()-1.0)**2 
-f = alpha + l1 + l2
+l1 = (s1.magnitude()-1.0)**2*k2
+l2 = (s2.magnitude()-1.0)**2*k2 
+ld = e0d.magnitude()+e1d.magnitude();
+f = dot(kbi,kbi)*k1/ld + l1 + l2
 
 f2 = l1
 
