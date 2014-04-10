@@ -60,7 +60,7 @@ def sympyMatrixSetter(funcname, funcMat, vectors ):
         for i in range(0,3):
           for j in range(0,3):
             c_code += "  M(oX+"+str(i)+", oY+"+str(j)+") = "
-            c_code += funcMat[i][j]+"("+callstring+");\n"
+            c_code += funcMat[j][i]+"("+callstring+");\n"
 
 
 	c_code += "}\n\n"

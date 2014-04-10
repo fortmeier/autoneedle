@@ -259,9 +259,13 @@ void simulateImplicitChentanez( double dt )
 {
   int n = numNodes;
 
-  cml::vectord xo(numNodes*3); // positions from last step
-  cml::vectord vo(numNodes*3); // velocities from last step
-  cml::vectord ao(numNodes*3); // accelerations from last step
+  cml::vectord xo(numNodes*3+numNodes); // positions from last step
+  cml::vectord vo(numNodes*3+numNodes); // velocities from last step
+  cml::vectord ao(numNodes*3+numNodes); // accelerations from last step
+
+  xo.zero();
+  vo.zero();
+  ao.zero();
 
   for(int i = 0; i < n; i++)
   {
@@ -276,18 +280,18 @@ void simulateImplicitChentanez( double dt )
     ao[i*3+2]=a[i][2];
   }
 
-  cml::vectord F(n*3); // sum of forces
+  cml::vectord F(n*3+n); // sum of forces
   //cml::vectord xp(n*3); // new positions
   //cml::vectord vp(n*3); // new velocities
-  cml::vectord ap(n*3); // new accelerations, thats what we solve the LSE for
+  cml::vectord ap(n*3+n); // new accelerations, thats what we solve the LSE for
 
-  cml::matrixd_r dF_dx(n*3, n*3); // Jacobian of force with respect to position
-  cml::matrixd_r dF_dv(n*3, n*3); // Jacobian of force with respect to velocity
-  cml::matrixd_r M(n*3, n*3); // Jacobian of force with respect to velocity
+  cml::matrixd_r dF_dx(n*3+n, n*3+n); // Jacobian of force with respect to position
+  cml::matrixd_r dF_dv(n*3+n, n*3+n); // Jacobian of force with respect to velocity
+  cml::matrixd_r M(n*3+n, n*3+n); // Jacobian of force with respect to velocity
 
 
-  cml::matrixd_r A(n*3, n*3); // resulting matrix for LSE
-  cml::vectord b(n*3); // resulting vector for LSE
+  cml::matrixd_r A(n*3+n, n*3+n); // resulting matrix for LSE
+  cml::vectord b(n*3+n); // resulting vector for LSE
 
   double m = 0.001;
 
@@ -295,23 +299,27 @@ void simulateImplicitChentanez( double dt )
   double gamma = 0.5;
 
   // mass matrix
-  cml::identity_transform( M );
-  M = M * m;
+  M.zero();
+  for(int i = 0; i<n; i++)
+  {
+    M(i*3+0,i*3+0) = m;
+    M(i*3+1,i*3+1) = m;
+    M(i*3+2,i*3+2) = m;
+    M(n*3 + i,n*3 + i) = 0;
+
+  } 
   //M(3*(n-1)+0,3*(n-1)+0) *=0.5;
   //M(3*(n-1)+1,3*(n-1)+1) *=0.5;
   //M(3*(n-1)+2,3*(n-1)+2) *=0.5;
   std::cout<<"M"<<M<<std::endl;
 
   // fill the Jacobian dF_dx
+  dF_dx.zero();
   for(int i = 0; i < n; i++)
   {
     if(i>1 && i < n-1) {
       needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
-    }
-    if(i>1 && i < n-1) {
       needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i+1], x[i], x[i-1]);
-    }
-    if(i>1 && i < n-1) {
       needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
     }
     if(i==n-1) {
@@ -323,7 +331,7 @@ void simulateImplicitChentanez( double dt )
     }
   } 
 
-  dF_dx *= 1.0;
+  dF_dx *= -1.0;
   std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
 
   // fill the Jacobian dF_dv
@@ -355,7 +363,9 @@ void simulateImplicitChentanez( double dt )
   // fill A: A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
   A = M - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
 
-  std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
+
+
+
 
   // fill b: F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
   // but first, F
@@ -364,7 +374,7 @@ void simulateImplicitChentanez( double dt )
   {
     Vector f(0,0,0);
 
-    if( i > 1 && i < n-1 ) f = +calcF(i, true, false, false) * -1.0;
+    if( i > 1 && i < n-1 ) f = +calcF(i, true, false, false) * -0.4;
     //if( i > 1 && i < n-1 ) f = +calcF(i, false, true, false) * -1.0;
     //if( i > 1 && i < n-2 ) f = +calcF(i, false, false, true) * -1.0;
 
@@ -385,6 +395,26 @@ void simulateImplicitChentanez( double dt )
 
   b = F + b1 + b2;
 
+  // add lagrange multipliers
+  for(int i = 0; i < n; i++) 
+  {
+    Vector N(1,0,0);
+
+    if(i>1) N = (x[i]-x[i-1]).normalize();
+    A(n*3+i, i*3+0) = N[0];
+    A(n*3+i, i*3+1) = N[1];
+    A(n*3+i, i*3+2) = N[2];
+    A(i*3+0, n*3+i) = N[0];
+    A(i*3+1, n*3+i) = N[1];
+    A(i*3+2, n*3+i) = N[2];
+    A(n*3+i, n*3+i) = 1;
+    b[n*3+i] = 0;
+
+  }
+
+  std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
+
+
   std::cout<<"b: "<<b<<std::endl;
 
   if(false)
@@ -398,7 +428,7 @@ void simulateImplicitChentanez( double dt )
 
 
   // length enforcement
-  bool useEnforcement = false;
+  bool useEnforcement = true;
   
   if(useEnforcement) 
   {
@@ -457,7 +487,7 @@ void simulateImplicitChentanez( double dt )
   }
   for(int i = 1; i < n; i++)
   {
-    a[i] *= 0.99;
+    a[i] *= 0.95;
     v[i] *= 0.99;
   } 
 }
@@ -471,7 +501,7 @@ void simulate()
 
   static int c = 0;
 
-  for(int i = 0; i < 1 && c < 300; i++)
+  for(int i = 0; i < 1 && c < 30000; i++)
   {
     c++;
     //simulateExplicit(dt);
