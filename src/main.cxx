@@ -2,12 +2,15 @@
 
 #include "generatedCode.h"
 #include "mathheader.h"
+#include "needle.h"
 #include "Rendering.h"
 
 
 #define numNodes 10
 
 double k = 1.0;
+
+BendingNeedleModel needle;
   
 std::vector<Vector> x(numNodes);
 std::vector<Vector> f(numNodes);

@@ -26,6 +26,7 @@ ADD_CUSTOM_TARGET(
 
 SET( source
   src/main.cxx
+  src/needle.cxx
   src/Rendering.cxx
 )
 
