@@ -16,62 +16,37 @@ std::vector<Vector> a(numNodes);
 
 Rendering* r;
 
-Vector calcF(int i, bool curr = true, bool next = true, bool prev = true)
+Vector calcF(int i)
 {
-      Vector fb = Vector(
-         needle_df_dx(x[i-1],x[i],x[i+1]),
-         needle_df_dy(x[i-1],x[i],x[i+1]),
-         needle_df_dz(x[i-1],x[i],x[i+1])
-      );
-      Vector fa = Vector(
-         needle_df_dxnext(x[i-2],x[i-1],x[i]),
-         needle_df_dynext(x[i-2],x[i-1],x[i]),
-         needle_df_dznext(x[i-2],x[i-1],x[i])
-      );
-      Vector fc = Vector(
-         needle_df_dxprev(x[i],x[i+1],x[i+2]),
-         needle_df_dyprev(x[i],x[i+1],x[i+2]),
-         needle_df_dzprev(x[i],x[i+1],x[i+2])
-      );
-  Vector f(0,0,0);
-  if(curr) f += fb;
-  if(next) f += fa;
-  if(prev) f += fc;
+  Vector f = Vector(
+    needle_Fx(x[i-1],x[i],x[i+1]),
+    needle_Fy(x[i-1],x[i],x[i+1]),
+    needle_Fz(x[i-1],x[i],x[i+1])
+  );
   return  f;
 }
 
-void simulateExplicit( double dt )
+Vector calcFNext(int i)
 {
-  for(int i = 2; i < x.size(); i++)
-  {
-    double m = 0.001;
-
-
-
-    if(i != x.size()-1 ) 
-    {
-      f[i] = calcF(i);
-    } else {
-      f[i] = calcF(i, false, true, false );
-    }
-    f[i] *= -1.0;
-  
-    // double g = 9.81;
-    double g = 9.81;
-
-    f[i] += Vector(0,-1,0) * (m * g);
- 
-    // damping
-    v[i] *= 0.99;
- 
-    // explicit update
-    a[i] = f[i] / m * 1.0;
-
-    v[i] = v[i] + a[i] * dt;
-
-    x[i] = x[i] + f[i]*0.1;//v[i] * dt;// + a[i] * dt * dt;
-  }
+  Vector f = Vector(
+    needle_Fx_next(x[i],x[i+1],x[i+2]),
+    needle_Fy_next(x[i],x[i+1],x[i+2]),
+    needle_Fz_next(x[i],x[i+1],x[i+2])
+  );
+  return  f;
 }
+
+Vector calcFPrev(int i)
+{
+  Vector f = Vector(
+    needle_Fx_next(x[i],x[i-1],x[i-2]),
+    needle_Fy_next(x[i],x[i-1],x[i-2]),
+    needle_Fz_next(x[i],x[i-1],x[i-2])
+  );
+  return  f;
+}
+
+
 
 void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
 {
@@ -98,144 +73,6 @@ void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
   std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 }
 
-void simulateImplicit( double dt )
-{
-  int n = numNodes;
-
-  cml::vectord b(n*3);
-  cml::vectord x_old(n*3);
-  cml::vectord f_old(n*3);
-
-  double m = 10.0;
-
-  // fill A
-  cml::matrixd_r A(n*3, n*3);
-  cml::identity_transform( A );
-  for(int i = 0; i < n; i++)
-  {
-    if(i>1 && i < n-1) {
-      /*A(i*3 + 0,i*3 + 0) = needle_df_dx_dx(x[i-1],x[i],x[i+1]); 
-      A(i*3 + 1,i*3 + 1) = needle_df_dy_dy(x[i-1],x[i],x[i+1]); 
-      A(i*3 + 2,i*3 + 2) = needle_df_dz_dz(x[i-1],x[i],x[i+1]); */
-      needle_dfMatrixSetter( i*3, i*3,A, x[i-1],x[i],x[i+1]);
-    }
-    if(i>1 && i < n) {
-      /*A(i*3 + 0,i*3 + 0 - 3) = needle_df_dx_dxprev(x[i],x[i-1],x[i-2]); 
-      A(i*3 + 1,i*3 + 1 - 3) = needle_df_dy_dyprev(x[i],x[i-1],x[i-2]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df_dz_dzprev(x[i],x[i-1],x[i-2]); */
-      needle_dfprevMatrixSetter( i*3, i*3-3,A, x[i], x[i-1], x[i-2]);
-    }
-    if(i>1 && i < n-2) {
-      /*A(i*3 + 0,i*3 + 0 + 3) = needle_df_dx_dxprev(x[i],x[i+1],x[i+2]); 
-      A(i*3 + 1,i*3 + 1 + 3) = needle_df_dy_dyprev(x[i],x[i+1],x[i+2]); 
-      A(i*3 + 2,i*3 + 2 + 3) = needle_df_dz_dzprev(x[i],x[i+1],x[i+2]); */
-      needle_dfprevMatrixSetter( i*3, i*3+3,A, x[i], x[i+1], x[i+2]);
- 
-    }
-    if(i==n-1) {
-      /*
-      A(i*3 + 0 - 3, i*3 + 0) = needle_df2_dx_dx(x[i-1],x[i]); 
-      A(i*3 + 1 - 3, i*3 + 1) = needle_df2_dy_dy(x[i-1],x[i]); 
-      A(i*3 + 2 - 3, i*3 + 2) = needle_df2_dz_dz(x[i-1],x[i]);*/
-      needle_df2MatrixSetter( i*3-3, i*3,A, x[i-1], x[i] );
-
-      /*A(i*3 + 0,i*3 + 0 - 3) = needle_df2_dx_dx(x[i-1],x[i]); 
-      A(i*3 + 1,i*3 + 1 - 3) = needle_df2_dy_dy(x[i-1],x[i]); 
-      A(i*3 + 2,i*3 + 2 - 3) = needle_df2_dz_dz(x[i-1],x[i]);*/
-      /*A(i*3 + 0,i*3 + 0) = needle_df2_dx_dx(x[i],x[i-1]); 
-      A(i*3 + 1,i*3 + 1) = needle_df2_dy_dy(x[i],x[i-1]); 
-      A(i*3 + 2,i*3 + 2) = needle_df2_dz_dz(x[i],x[i-1]);  */
-      needle_df2MatrixSetter( i*3, i*3,A, x[i], x[i-1] );
-
-    } 
-//    else if(i==0) {
-      //A(i*3 + 0,i*3 + 0) = -needle_df2_dx_dx(x[1],x[0]); 
-      //A(i*3 + 1,i*3 + 1) = -needle_df2_dy_dy(x[1],x[0]); 
-      //A(i*3 + 2,i*3 + 2) = -needle_df2_dz_dz(x[1],x[0]); 
-//    }
-    // add mass as damping term
-    if(i>0 && i<n-1) {
-      A(i*3 + 0,i*3 + 0) += m; 
-      A(i*3 + 1,i*3 + 1) += m; 
-      A(i*3 + 2,i*3 + 2) += m; 
-    } else {
-      A(i*3 + 0,i*3 + 0) += m;1 * 0.5; 
-      A(i*3 + 1,i*3 + 1) += m;1 * 0.5; 
-      A(i*3 + 2,i*3 + 2) += m;1 * 0.5; 
-    }
-
-  } 
-
-  std::cout<<A<<std::endl;
-
-
-  // fill b
-  for(int i = 0; i < n; i++)
-  {
-    b[i*3 + 0] = 0; 
-    b[i*3 + 1] = -9.81 * 0.001; 
-    b[i*3 + 2] = 0; 
-
-    //if(i==n-1) b[i*3+1]*=0.5;
-
-    x_old[i*3 + 0] = x[i][0]; 
-    x_old[i*3 + 1] = x[i][1]; 
-    x_old[i*3 + 2] = x[i][2]; 
-
-    Vector f;
-    if( i > 0 && i < n-1 ) f = +calcF(i, true, true, true) * 1.0;
-    if( i == n-1)
-    {
-      f = Vector (
-        needle_df2_dx(x[n-2],x[n-1]), 
-        needle_df2_dy(x[n-2],x[n-1]), 
-        needle_df2_dz(x[n-2],x[n-1]) 
-      );       
-      f += calcF(i, false, true, false);
-    }
-    
-    f_old[i*3 + 0] = f[0]; 
-    f_old[i*3 + 1] = f[1]; 
-    f_old[i*3 + 2] = f[2]; 
-  }
-
-  for(int j = 0; j < 3 * 2; j++) {
-    f_old[j] = 0;
-    b[j] = 0;
-  }
-  for(int j = 0; j < 3 * 0; j++) {
-    f_old[n*3-1-j] = 0;
-    b[n*3-1-j] = 0;
-  }
-
-  cml::vectord ax = A * x_old;
-
-  b = b + ax - f_old;
-
-
-
-  // calc r
-  cml::vectord r = b * 0;
-  if(false)
-  {
-    cg(A,b,r);
-  } else {
-    r = inverse(A) * b;
-  }
-
-  std::cout<<"f_old: "<<f_old<<std::endl;
-  std::cout<<"b: "<<b<<std::endl;
-  std::cout<<"A * x_old: "<<ax<<std::endl;
-  std::cout<<"r: "<<r<<std::endl;
-
-  // extract x
-  for(int i = 0; i < n; i++)
-  {
-    x[i][0] = r[i*3 + 0];
-    x[i][1] = r[i*3 + 1];
-    x[i][2] = r[i*3 + 2];
-  }
-}
 
 /*
   compute with method of [1]:
@@ -252,9 +89,7 @@ void simulateImplicit( double dt )
 
 */
 
-
-
-
+bool debugOut = true;
 void simulateImplicitChentanez( double dt )
 {
   int n = numNodes;
@@ -311,28 +146,43 @@ void simulateImplicitChentanez( double dt )
   //M(3*(n-1)+0,3*(n-1)+0) *=0.5;
   //M(3*(n-1)+1,3*(n-1)+1) *=0.5;
   //M(3*(n-1)+2,3*(n-1)+2) *=0.5;
-  std::cout<<"M"<<M<<std::endl;
+  if(debugOut) std::cout<<"M"<<M<<std::endl;
 
   // fill the Jacobian dF_dx
   dF_dx.zero();
   for(int i = 0; i < n; i++)
   {
-    if(i>1 && i < n-1) {
-      needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
-      needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i+1], x[i], x[i-1]);
-      needle_dfprevMatrixSetter( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
-    }
-    if(i==n-1) {
-      //needle_dfprevMatrixSetter( i*3, i*3-3, dF_dx, x[i], x[i-1], x[i-2]);
-      //needle_dfMatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1], x[i-2]);
-      //needle_dfMatrixSetter( i*3+3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
-      //needle_df2MatrixSetter( i*3+3, i*3, dF_dx, x[i], x[i+1] );
-      //needle_df2MatrixSetter( i*3, i*3, dF_dx, x[i], x[i-1] );
-    }
+    // pF_pxi
+    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx, x[i-2], x[i-1], x[i]);
+    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx, x[i-1], x[i], x[i+1]);
+    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx, x[i], x[i+1], x[i+2]);
+
+    // pF_pxi+1
+    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
+    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2]);
+
+    // pF_pxi+2
+    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx, x[i], x[i+1], x[i+2]);
+
+    // pF_pxi-1
+    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx, x[i-1], x[i], x[i+1]);
+    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx, x[i-2], x[i-1], x[i]);
+
+    // pF_pxi+2
+    if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i]);
+
+    /*if(i>0 && i < n-1) {
+
+
+      needle_JacobianMatrixAdd( i*3, i*3, dF_dx, x[i-1],x[i],x[i+1]);
+      needle_JacobianprevMatrixAdd( i*3, i*3-3, dF_dx, x[i+1], x[i], x[i-1]);
+      needle_JacobianprevMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
+    }*/
   } 
 
-  dF_dx *= -1.0;
-  std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
+  dF_dx *= 1.0;
+  //dF_dx.transpose();
+  if(debugOut) std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
 
   // fill the Jacobian dF_dv
   /*
@@ -358,7 +208,7 @@ void simulateImplicitChentanez( double dt )
   dF_dv = 0.0 * M - 0.005 * dF_dx;
   dF_dv.zero();
 
-  std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
+  if(debugOut) std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
 
   // fill A: A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
   A = M - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
@@ -374,24 +224,24 @@ void simulateImplicitChentanez( double dt )
   {
     Vector f(0,0,0);
 
-    if( i > 1 && i < n-1 ) f = +calcF(i, true, false, false) * -0.4;
-    //if( i > 1 && i < n-1 ) f = +calcF(i, false, true, false) * -1.0;
-    //if( i > 1 && i < n-2 ) f = +calcF(i, false, false, true) * -1.0;
+    if( i > 0 && i < n-1 ) f += calcF(i);
+    if( i > 1 ) f += calcFPrev(i);
+    if( i < n-2 ) f += calcFNext(i);
 
-    if( i > 1 ) f[1] += -9.81 * M(i*3+1,i*3+1);
+    f[1] += -9.81 * M(i*3+1,i*3+1);
 
     F[i*3 + 0] = f[0]; 
     F[i*3 + 1] = f[1]; 
     F[i*3 + 2] = f[2]; 
   }
 
-  std::cout<<"F: "<<F<<std::endl;
+  if(debugOut) std::cout<<"F: "<<F<<std::endl;
 
   cml::vectord b1 = dt * dF_dx * ( vo + dt * ( 0.5 - beta) * ao );
   cml::vectord b2 = dF_dv * dt * (1.0-gamma) * ao;
 
-  std::cout<<"b1: "<<b1<<std::endl;
-  std::cout<<"b2: "<<b2<<std::endl;
+  if(debugOut) std::cout<<"b1: "<<b1<<std::endl;
+  if(debugOut) std::cout<<"b2: "<<b2<<std::endl;
 
   b = F + b1 + b2;
 
@@ -399,23 +249,28 @@ void simulateImplicitChentanez( double dt )
   for(int i = 0; i < n; i++) 
   {
     Vector N(1,0,0);
+    if(i==0) N = Vector(0,1,0);
+    if(i==1) N = Vector(0,1,0);
 
     if(i>1) N = (x[i]-x[i-1]).normalize();
+#if 1
     A(n*3+i, i*3+0) = N[0];
     A(n*3+i, i*3+1) = N[1];
     A(n*3+i, i*3+2) = N[2];
     A(i*3+0, n*3+i) = N[0];
     A(i*3+1, n*3+i) = N[1];
     A(i*3+2, n*3+i) = N[2];
-    A(n*3+i, n*3+i) = 1;
-    b[n*3+i] = 0;
+#endif
+
+    //A(n*3+i, n*3+i) = 1;
+    b[n*3+i] = 0; //-4*cml::dot(N, v[i])*dt - dt*dt*cml::dot(N,a[i]);
 
   }
 
-  std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
+  if(debugOut) std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
 
 
-  std::cout<<"b: "<<b<<std::endl;
+  if(debugOut) std::cout<<"b: "<<b<<std::endl;
 
   if(false)
   {
@@ -424,7 +279,7 @@ void simulateImplicitChentanez( double dt )
     ap = inverse(A) * b;
   }
 
-  std::cout<<"A^-1 * b = ap = "<<ap<<std::endl;
+  if(debugOut) std::cout<<"A^-1 * b = ap = "<<ap<<std::endl;
 
 
   // length enforcement
@@ -462,8 +317,11 @@ void simulateImplicitChentanez( double dt )
     v[i][2] += dt*((1.0-gamma)*a[i][2] + gamma*ap[i*3 + 2]);
   }
   // update std::vector a (giving a_plus)
+
+  double r = 0;
   for(int i = 0; i < n; i++)
   {
+    r += pow(a[i][0]-ap[i*3 + 0], 2) + pow(a[i][1]-ap[i*3 + 1], 2) + pow(a[i][2]-ap[i*3 + 2], 2);
     a[i][0] = ap[i*3 + 0];
     a[i][1] = ap[i*3 + 1];
     a[i][2] = ap[i*3 + 2];
@@ -485,11 +343,12 @@ void simulateImplicitChentanez( double dt )
   }
  
   }
-  for(int i = 1; i < n; i++)
+  for(int i = 0; i < n; i++)
   {
-    a[i] *= 0.95;
+    a[i] *= 0.99;
     v[i] *= 0.99;
-  } 
+  }
+  std::cout<<"Error: "<<r<<std::endl; 
 }
 
 
@@ -510,11 +369,13 @@ void simulate()
 
   for(int i = 0; i < numNodes; i++)
   {
+  if(debugOut) {
     std::cout<<i<<":"<<std::endl;
     std::cout<<"x: "<<x[i]<<std::endl;
     std::cout<<"f: "<<f[i]<<std::endl;
     std::cout<<"v: "<<v[i]<<std::endl;
     std::cout<<"a: "<<a[i]<<std::endl;
+  }
   }
 
   }

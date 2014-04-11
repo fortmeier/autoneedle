@@ -38,7 +38,7 @@ s2=(u2-u3)
 s1n=s1/s1.magnitude()
 s2n=s2/s2.magnitude()
 
-k1 = 10000
+k1 = 100
 k2 = 0
 
 e0 = u2-u1
@@ -56,38 +56,26 @@ beta = (((u1+u3)*0.5) - u2).magnitude() ** 2
 l1 = (s1.magnitude()-1.0)**2*k2
 l2 = (s2.magnitude()-1.0)**2*k2 
 ld = e0d.magnitude()+e1d.magnitude();
-f = dot(kbi,kbi)*k1/ld + l1 + l2
-
-f2 = l1
+E = dot(kbi,kbi)*k1/ld + l1 + l2
 
 code = ""
 
 # 1st derivative of energy function
-df2_dx=diff(f2, b[0])
-df2_dy=diff(f2, b[1])
-df2_dz=diff(f2, b[2])
+Fx=-diff(E, b[0])
+Fy=-diff(E, b[1])
+Fz=-diff(E, b[2])
 
-df_dx=diff(f, b[0])
-df_dy=diff(f, b[1])
-df_dz=diff(f, b[2])
+Fx_next=-diff(E, c[0])
+Fy_next=-diff(E, c[1])
+Fz_next=-diff(E, c[2])
 
-df_dxprev=diff(f, a[0])
-df_dyprev=diff(f, a[1])
-df_dzprev=diff(f, a[2])
+code += CodeToC.sympyToCMulti( [("Fx_next", Fx_next), ("Fy_next", Fy_next), ("Fz_next", Fz_next)], ["a", "b", "c"], prefix = "needle_" )
 
-df_dxnext=diff(f, c[0])
-df_dynext=diff(f, c[1])
-df_dznext=diff(f, c[2])
-
-code += CodeToC.sympyToCMulti( [("df_dx", df_dx), ("df_dy", df_dy), ("df_dz", df_dz)], ["a", "b", "c"], prefix = "needle_" )
-
-code += CodeToC.sympyToCMulti( [("df_dxprev", df_dxprev), ("df_dyprev", df_dyprev), ("df_dzprev", df_dzprev)], ["a", "b", "c"], prefix = "needle_" )
-code += CodeToC.sympyToCMulti( [("df_dxnext", df_dxnext), ("df_dynext", df_dynext), ("df_dznext", df_dznext)], ["a", "b", "c"], prefix = "needle_" )
-
-code += CodeToC.sympyToCMulti( [("df2_dx", df2_dx), ("df2_dy", df2_dy), ("df2_dz", df2_dz)], ["a", "b"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("Fx", Fx), ("Fy", Fy), ("Fz", Fz)], ["a", "b", "c"], prefix = "needle_" )
 
 
-def secondDeriv( func, funcname, var, vectors, postfix =""):
+
+def secondDeriv( func, funcname, var1, var2, vectors, postfix =""):
   code=""
   syms = ['x','y','z']
   funcMat = [['','',''],['','',''],['','','']];
@@ -95,19 +83,27 @@ def secondDeriv( func, funcname, var, vectors, postfix =""):
     for j in range(0,3):
        name='needle_'+funcname+'_d'+syms[i]+'_d'+syms[j]+postfix
        print "Generating "+name
-       deriv = diff(func, var[i], var[j])
+       deriv = diff(func, var1[i], var2[j])
        code += CodeToC.sympyToC( name, deriv, vectors )
        funcMat[i][j] = name
 
   code += CodeToC.sympyMatrixSetter( 'needle_'+funcname+postfix, funcMat, vectors ) 
+  code += CodeToC.sympyMatrixAdder( 'needle_'+funcname+postfix, funcMat, vectors ) 
 
   return code
 
 
-code += secondDeriv( f2, "df2", b, ["a", "b"] )
-code += secondDeriv( f, "df", b, ["a", "b", "c"] )
-code += secondDeriv( f, "df", a, ["a", "b", "c"], "prev" )
-code += secondDeriv( f, "df", c, ["a", "b", "c"], "next" )
+code += secondDeriv( -E, "Jacobian", b, b, ["a", "b", "c"], "BB")
+code += secondDeriv( -E, "Jacobian", b, a, ["a", "b", "c"], "BA" )
+code += secondDeriv( -E, "Jacobian", b, c, ["a", "b", "c"], "BC" )
+
+code += secondDeriv( -E, "Jacobian", a, b, ["a", "b", "c"], "AB")
+code += secondDeriv( -E, "Jacobian", a, a, ["a", "b", "c"], "AA" )
+code += secondDeriv( -E, "Jacobian", a, c, ["a", "b", "c"], "AC" )
+
+code += secondDeriv( -E, "Jacobian", c, b, ["a", "b", "c"], "CB")
+code += secondDeriv( -E, "Jacobian", c, a, ["a", "b", "c"], "CA" )
+code += secondDeriv( -E, "Jacobian", c, c, ["a", "b", "c"], "CC" )
 
 
 f = open('gen_src/generatedCode.h', 'w')
