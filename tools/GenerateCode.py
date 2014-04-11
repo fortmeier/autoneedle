@@ -38,7 +38,7 @@ s2=(u2-u3)
 s1n=s1/s1.magnitude()
 s2n=s2/s2.magnitude()
 
-k1 = 100
+k1 = 1000
 k2 = 0
 
 e0 = u2-u1

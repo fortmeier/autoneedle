@@ -69,7 +69,7 @@ void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
     rsold=rsnew; 
     i++;
 
-  } while (sqrt(rsnew) > eps );
+  } while (sqrt(rsnew) > eps && i < 1000);
   std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 }
 
@@ -89,9 +89,12 @@ void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x )
 
 */
 
-bool debugOut = true;
+double totaltime = 0;
+
+bool debugOut = false;
 void simulateImplicitChentanez( double dt )
 {
+  totaltime += dt;
   int n = numNodes;
 
   cml::vectord xo(numNodes*3+numNodes); // positions from last step
@@ -143,9 +146,9 @@ void simulateImplicitChentanez( double dt )
     M(n*3 + i,n*3 + i) = 0;
 
   } 
-  //M(3*(n-1)+0,3*(n-1)+0) *=0.5;
-  //M(3*(n-1)+1,3*(n-1)+1) *=0.5;
-  //M(3*(n-1)+2,3*(n-1)+2) *=0.5;
+  M(3*(n-1)+0,3*(n-1)+0) *=0.5;
+  M(3*(n-1)+1,3*(n-1)+1) *=0.5;
+  M(3*(n-1)+2,3*(n-1)+2) *=0.5;
   if(debugOut) std::cout<<"M"<<M<<std::endl;
 
   // fill the Jacobian dF_dx
@@ -205,8 +208,9 @@ void simulateImplicitChentanez( double dt )
   }*/
 
 
-  dF_dv = 0.0 * M - 0.005 * dF_dx;
-  dF_dv.zero();
+  // OK dF_dv = -50.5 * M + 0.005 * dF_dx;
+  dF_dv = -50.0 * M + 0.005 * dF_dx;
+  //dF_dv.zero();
 
   if(debugOut) std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
 
@@ -229,6 +233,10 @@ void simulateImplicitChentanez( double dt )
     if( i < n-2 ) f += calcFNext(i);
 
     f[1] += -9.81 * M(i*3+1,i*3+1);
+
+    double offset = (sin(totaltime-3.141/2.0)+1.0)*5.0;
+    //if(true) std::cout<<"offset: "<<offset<<std::endl;
+    //if(i==n-1) f[1] += (x[i][1] - offset)*-1.0;
 
     F[i*3 + 0] = f[0]; 
     F[i*3 + 1] = f[1]; 
@@ -265,6 +273,8 @@ void simulateImplicitChentanez( double dt )
     //A(n*3+i, n*3+i) = 1;
     b[n*3+i] = 0; //-4*cml::dot(N, v[i])*dt - dt*dt*cml::dot(N,a[i]);
 
+    //if(i==0 || i==1) b[n*3+i] += 10.1*sin(totaltime);
+
   }
 
   if(debugOut) std::cout<<"A: "<<std::endl<<A<<std::endl<<std::endl;
@@ -272,7 +282,7 @@ void simulateImplicitChentanez( double dt )
 
   if(debugOut) std::cout<<"b: "<<b<<std::endl;
 
-  if(false)
+  if(true)
   {
     cg(A,b,ap);
   } else {
@@ -287,6 +297,12 @@ void simulateImplicitChentanez( double dt )
   
   if(useEnforcement) 
   {
+    ap[0] = 0;
+    ap[1] = 0;
+    ap[2] = 0;
+    ap[3] = 0;
+    ap[4] = 0;
+    ap[5] = 0;
   for(int i = 1; i < n; i++)
   {
     Vector N = x[i]-x[i-1];
@@ -348,7 +364,7 @@ void simulateImplicitChentanez( double dt )
     a[i] *= 0.99;
     v[i] *= 0.99;
   }
-  std::cout<<"Error: "<<r<<std::endl; 
+  std::cout<<"time: "<<totaltime<<" Error: "<<r<<std::endl; 
 }
 
 
@@ -366,7 +382,10 @@ void simulate()
     //simulateExplicit(dt);
     //simulateImplicit(dt);
     simulateImplicitChentanez(dt);
-
+    if(c%99 == 0 && c < 400) {
+      //x[0][1] += 0.1;
+      //x[1][1] += 0.1;
+    }
   for(int i = 0; i < numNodes; i++)
   {
   if(debugOut) {
@@ -400,7 +419,6 @@ int main(int argi, char** argv)
      a[i] = Vector(0,0,0);
   }
 
-  x[5][1] = 0.0;
 
   r->setup();
   r->setCallback( simulate );
