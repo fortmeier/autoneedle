@@ -118,6 +118,7 @@ code += CodeToC.sympyToCMulti( [("FSx", FSx), ("FSy", FSy), ("FSz", FSz)], ["a",
 code += secondDeriv( -Espring, "spring_Jacobian", a, a, ["a", "b"], ["k"], "")
 
 f = open('gen_src/generatedCode.h', 'w')
+f.write("#pragma once\n\n")
 f.write("#include \"mathheader.h\"\n\n")
 f.write(code)
 
