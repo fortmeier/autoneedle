@@ -14,6 +14,8 @@ a = symbols('a[0] a[1] a[2]')
 b = symbols('b[0] b[1] b[2]')
 c = symbols('c[0] c[1] c[2]')
 
+k, k1 = symbols('k k1');
+
 u = ReferenceFrame('u')
 
 u1=(u.x*a[0] + u.y*a[1] + u.z*a[2])
@@ -38,7 +40,7 @@ s2=(u2-u3)
 s1n=s1/s1.magnitude()
 s2n=s2/s2.magnitude()
 
-k1 = 1000
+#k1 = 1000
 k2 = 0
 
 e0 = u2-u1
@@ -58,6 +60,8 @@ l2 = (s2.magnitude()-1.0)**2*k2
 ld = e0d.magnitude()+e1d.magnitude();
 E = dot(kbi,kbi)*k1/ld + l1 + l2
 
+Espring = (s1.magnitude())**2*k
+
 code = ""
 
 # 1st derivative of energy function
@@ -69,42 +73,49 @@ Fx_next=-diff(E, c[0])
 Fy_next=-diff(E, c[1])
 Fz_next=-diff(E, c[2])
 
-code += CodeToC.sympyToCMulti( [("Fx_next", Fx_next), ("Fy_next", Fy_next), ("Fz_next", Fz_next)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("Fx_next", Fx_next), ("Fy_next", Fy_next), ("Fz_next", Fz_next)], ["a", "b", "c"], ["k1"], prefix = "needle_" )
 
-code += CodeToC.sympyToCMulti( [("Fx", Fx), ("Fy", Fy), ("Fz", Fz)], ["a", "b", "c"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("Fx", Fx), ("Fy", Fy), ("Fz", Fz)], ["a", "b", "c"], ["k1"], prefix = "needle_" )
 
 
 
-def secondDeriv( func, funcname, var1, var2, vectors, postfix =""):
+def secondDeriv( func, funcname, var1, var2, vectors, scalars, postfix =""):
   code=""
   syms = ['x','y','z']
   funcMat = [['','',''],['','',''],['','','']];
   for i in range(0,3):
     for j in range(0,3):
-       name='needle_'+funcname+'_d'+syms[i]+'_d'+syms[j]+postfix
+       name=funcname+'_d'+syms[i]+'_d'+syms[j]+postfix
        print "Generating "+name
        deriv = diff(func, var1[i], var2[j])
-       code += CodeToC.sympyToC( name, deriv, vectors )
+       code += CodeToC.sympyToC( name, deriv, vectors, scalars )
        funcMat[i][j] = name
 
-  code += CodeToC.sympyMatrixSetter( 'needle_'+funcname+postfix, funcMat, vectors ) 
-  code += CodeToC.sympyMatrixAdder( 'needle_'+funcname+postfix, funcMat, vectors ) 
+  code += CodeToC.sympyMatrixAdder( funcname+postfix, funcMat, vectors, scalars ) 
 
   return code
 
 
-code += secondDeriv( -E, "Jacobian", b, b, ["a", "b", "c"], "BB")
-code += secondDeriv( -E, "Jacobian", b, a, ["a", "b", "c"], "BA" )
-code += secondDeriv( -E, "Jacobian", b, c, ["a", "b", "c"], "BC" )
+code += secondDeriv( -E, "needle_Jacobian", b, b, ["a", "b", "c"], ["k1"], "BB")
+code += secondDeriv( -E, "needle_Jacobian", b, a, ["a", "b", "c"], ["k1"], "BA" )
+code += secondDeriv( -E, "needle_Jacobian", b, c, ["a", "b", "c"], ["k1"], "BC" )
 
-code += secondDeriv( -E, "Jacobian", a, b, ["a", "b", "c"], "AB")
-code += secondDeriv( -E, "Jacobian", a, a, ["a", "b", "c"], "AA" )
-code += secondDeriv( -E, "Jacobian", a, c, ["a", "b", "c"], "AC" )
+code += secondDeriv( -E, "needle_Jacobian", a, b, ["a", "b", "c"], ["k1"], "AB")
+code += secondDeriv( -E, "needle_Jacobian", a, a, ["a", "b", "c"], ["k1"], "AA" )
+code += secondDeriv( -E, "needle_Jacobian", a, c, ["a", "b", "c"], ["k1"], "AC" )
 
-code += secondDeriv( -E, "Jacobian", c, b, ["a", "b", "c"], "CB")
-code += secondDeriv( -E, "Jacobian", c, a, ["a", "b", "c"], "CA" )
-code += secondDeriv( -E, "Jacobian", c, c, ["a", "b", "c"], "CC" )
+code += secondDeriv( -E, "needle_Jacobian", c, b, ["a", "b", "c"], ["k1"], "CB")
+code += secondDeriv( -E, "needle_Jacobian", c, a, ["a", "b", "c"], ["k1"], "CA" )
+code += secondDeriv( -E, "needle_Jacobian", c, c, ["a", "b", "c"], ["k1"], "CC" )
 
+
+FSx=-diff(Espring, a[0])
+FSy=-diff(Espring, a[1])
+FSz=-diff(Espring, a[2])
+
+code += CodeToC.sympyToCMulti( [("FSx", FSx), ("FSy", FSy), ("FSz", FSz)], ["a", "b"], ["k"], prefix = "spring_" )
+
+code += secondDeriv( -Espring, "spring_Jacobian", a, a, ["a", "b"], ["k"], "")
 
 f = open('gen_src/generatedCode.h', 'w')
 f.write("#include \"mathheader.h\"\n\n")

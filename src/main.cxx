@@ -6,6 +6,8 @@
 
 
 #define numNodes 10
+
+double k = 1.0;
   
 std::vector<Vector> x(numNodes);
 std::vector<Vector> f(numNodes);
@@ -16,32 +18,42 @@ std::vector<Vector> a(numNodes);
 
 Rendering* r;
 
-Vector calcF(int i)
+Vector calcF(int i, double k)
 {
   Vector f = Vector(
-    needle_Fx(x[i-1],x[i],x[i+1]),
-    needle_Fy(x[i-1],x[i],x[i+1]),
-    needle_Fz(x[i-1],x[i],x[i+1])
+    needle_Fx(x[i-1],x[i],x[i+1], k),
+    needle_Fy(x[i-1],x[i],x[i+1], k),
+    needle_Fz(x[i-1],x[i],x[i+1], k)
   );
   return  f;
 }
 
-Vector calcFNext(int i)
+Vector calcFNext(int i, double k)
 {
   Vector f = Vector(
-    needle_Fx_next(x[i],x[i+1],x[i+2]),
-    needle_Fy_next(x[i],x[i+1],x[i+2]),
-    needle_Fz_next(x[i],x[i+1],x[i+2])
+    needle_Fx_next(x[i],x[i+1],x[i+2], k),
+    needle_Fy_next(x[i],x[i+1],x[i+2], k),
+    needle_Fz_next(x[i],x[i+1],x[i+2], k)
   );
   return  f;
 }
 
-Vector calcFPrev(int i)
+Vector calcFPrev(int i, double k)
 {
   Vector f = Vector(
-    needle_Fx_next(x[i],x[i-1],x[i-2]),
-    needle_Fy_next(x[i],x[i-1],x[i-2]),
-    needle_Fz_next(x[i],x[i-1],x[i-2])
+    needle_Fx_next(x[i],x[i-1],x[i-2], k),
+    needle_Fy_next(x[i],x[i-1],x[i-2], k),
+    needle_Fz_next(x[i],x[i-1],x[i-2], k)
+  );
+  return  f;
+}
+
+Vector calcSpring(Vector a, Vector b, double k)
+{
+  Vector f = Vector(
+    spring_FSx(a,b,k),
+    spring_FSy(a,b,k),
+    spring_FSz(a,b,k)
   );
   return  f;
 }
@@ -105,6 +117,10 @@ void simulateImplicitChentanez( double dt )
   vo.zero();
   ao.zero();
 
+      double offset = (sin(totaltime-3.141/2.0)+1.0)*2.5;
+      Vector sX = Vector(10,5,0);
+      k = offset / 10.0;
+
   for(int i = 0; i < n; i++)
   {
     xo[i*3+0]=x[i][0];
@@ -136,6 +152,8 @@ void simulateImplicitChentanez( double dt )
   double beta = 0.25;
   double gamma = 0.5;
 
+  double kN = 1000.0;
+
   // mass matrix
   M.zero();
   for(int i = 0; i<n; i++)
@@ -156,23 +174,23 @@ void simulateImplicitChentanez( double dt )
   for(int i = 0; i < n; i++)
   {
     // pF_pxi
-    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx, x[i-2], x[i-1], x[i]);
-    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx, x[i-1], x[i], x[i+1]);
-    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx, x[i], x[i+1], x[i+2]);
+    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx, x[i-2], x[i-1], x[i], kN);
+    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx, x[i-1], x[i], x[i+1], kN);
+    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx, x[i], x[i+1], x[i+2], kN);
 
     // pF_pxi+1
-    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
-    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2]);
+    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1], kN);
+    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2], kN);
 
     // pF_pxi+2
-    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx, x[i], x[i+1], x[i+2]);
+    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx, x[i], x[i+1], x[i+2], kN);
 
     // pF_pxi-1
-    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx, x[i-1], x[i], x[i+1]);
-    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx, x[i-2], x[i-1], x[i]);
+    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx, x[i-1], x[i], x[i+1], kN);
+    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx, x[i-2], x[i-1], x[i], kN);
 
     // pF_pxi+2
-    if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i]);
+    if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i], kN);
 
     /*if(i>0 && i < n-1) {
 
@@ -182,6 +200,8 @@ void simulateImplicitChentanez( double dt )
       needle_JacobianprevMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1]);
     }*/
   } 
+
+  spring_JacobianMatrixAdd( (n-1)*3, (n-1)*3, dF_dx, x[n-1], sX, k ); 
 
   dF_dx *= 1.0;
   //dF_dx.transpose();
@@ -228,15 +248,18 @@ void simulateImplicitChentanez( double dt )
   {
     Vector f(0,0,0);
 
-    if( i > 0 && i < n-1 ) f += calcF(i);
-    if( i > 1 ) f += calcFPrev(i);
-    if( i < n-2 ) f += calcFNext(i);
+    if( i > 0 && i < n-1 ) f += calcF(i, kN);
+    if( i > 1 ) f += calcFPrev(i, kN);
+    if( i < n-2 ) f += calcFNext(i, kN);
 
     f[1] += -9.81 * M(i*3+1,i*3+1);
 
-    double offset = (sin(totaltime-3.141/2.0)+1.0)*5.0;
-    //if(true) std::cout<<"offset: "<<offset<<std::endl;
-    //if(i==n-1) f[1] += (x[i][1] - offset)*-1.0;
+    if(i==n-1) {
+
+      Vector FP = calcSpring(x[i], sX, k);
+      if(true) std::cout<<"offset: "<<sX<<std::endl;
+      f += FP;
+    }
 
     F[i*3 + 0] = f[0]; 
     F[i*3 + 1] = f[1]; 
