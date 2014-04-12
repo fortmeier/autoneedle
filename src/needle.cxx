@@ -5,12 +5,13 @@
 #include "generatedCode.h"
 
 
-SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int n ) :
-  columns(m),
-  rows(n)
+SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int b ) :
+  size(m),
+  bandwidth(b),
+  bandwidth_2(b/2)
 {
 
-  values = new double[m*n];
+  values = new double[m*bandwidth];
   zero();
 
 }
@@ -22,31 +23,31 @@ SparseDiagonalMatrix::~SparseDiagonalMatrix()
 
 void SparseDiagonalMatrix::zero()
 {
-  for( int i = 0; i < columns; i++ )
+  for( int i = 0; i < bandwidth; i++ )
   {
-    for( int j = 0; j < rows; j++ )
+    for( int j = 0; j < size; j++ )
     {
-      (*this)(i,j) = 0;
+      _at(i,j) = 0;
     }
   }
 }
 
 std::ostream& operator<< ( std::ostream &out, SparseDiagonalMatrix &matrix )
 {
-  for( int j = 0; j < matrix.rows; j++ )
+  for( int j = 0; j < matrix.size; j++ )
   {
     out << "[ ";
-    for( int k = 0; k < j; k++) 
+    for( int k = matrix.bandwidth_2; k < j && k < matrix.size - matrix.bandwidth_2-1; k++) 
     {
       out << ". ";
     }
 
-    for( int i = 0; i < matrix.columns; i++ )
+    for( int i = 0; i < matrix.bandwidth; i++ )
     {
-      out << matrix(i,j) << " ";
+      out << matrix._at(i,j) << " ";
     }
 
-    for( int k = 0; k < matrix.columns - j -1; k++) 
+    for( int k = matrix.bandwidth; k < matrix.size - j -1 && k < matrix.size - matrix.bandwidth; k++) 
     {
       out << ". ";
     }
@@ -56,14 +57,89 @@ std::ostream& operator<< ( std::ostream &out, SparseDiagonalMatrix &matrix )
   return out;
 }
 
+double& SparseDiagonalMatrix::_at( int i, int j )
+{
+  return values[ i + bandwidth*j ];
+}
+
 double& SparseDiagonalMatrix::operator() ( int i, int j )
 {
-  return values[ i + columns*j ];
+  if( j <= bandwidth_2) return _at(i,j);
+  else if( j >= size - bandwidth_2) return _at(i-size+bandwidth,j);
+  return _at(i-j+bandwidth_2,j);
+}
+
+cml::vectord SparseDiagonalMatrix::operator* (cml::vectord x)
+{
+  cml::vectord r(x.size());
+
+  for(int j = 0; j < bandwidth_2+1; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i++ )
+    {
+      r[j] += (*this)(i,j) * x[i];
+    }
+
+  }
+
+  for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i++ )
+    {
+      r[j] += _at(i,j) * x[i+j-bandwidth_2];
+    }
+
+  }
+
+  for(int j = size - bandwidth_2-1; j < size; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i++ )
+    {
+      r[j] += _at(i,j) * x[i+size-bandwidth];
+    }
+
+  }
+
+  return r;
+}
+
+void testMatrix() {
+  SparseDiagonalMatrix A( 10, 5 );
+  A(0,0) = 1;
+  A(1,1) = 2;
+  A(0,2) = 3;
+  A(3,3) = 4;
+  A(4,4) = 5;
+  A(5,5) = 6;
+  A(6,6) = 7;
+  A(9,7) = 8;
+  A(8,8) = 9;
+  A(9,9) = 3;
+
+  cml::vectord r(10);
+  r[0] = 11;
+  r[1] = 22;
+  r[2] = 33;
+  r[3] = 44;
+  r[4] = 55;
+  r[5] = 66;
+  r[6] = 77;
+  r[7] = 88;
+  r[8] = 99;
+  r[9] = 11;
+  std::cout<<A<<std::endl;
+  std::cout<<r<<std::endl;
+  std::cout<<A*r<<std::endl;
+  exit(0);
+
 }
 
 BendingNeedleModel::BendingNeedleModel() :
   numNodes( 10 ),
-  dF_dx_new( numNodes, 5 * 3 ),
+  dF_dx_new( numNodes*3, 5*3 ),
   x( numNodes ),
   f( numNodes ),
   v( numNodes ),
@@ -73,6 +149,8 @@ BendingNeedleModel::BendingNeedleModel() :
   kSpring(1.0),
   kNeedle(1000.0)
 {
+
+  //testMatrix();
   for(int i = 0; i < numNodes; i++)
   {
      x[i] = Vector(i, 0.0f,0);
@@ -215,6 +293,7 @@ void BendingNeedleModel::simulateImplicitChentanez( double dt )
 
   // fill the Jacobian dF_dx
   dF_dx.zero();
+  dF_dx_new.zero();
   for(int i = 0; i < n; i++)
   {
     // pF_pxi
@@ -236,6 +315,25 @@ void BendingNeedleModel::simulateImplicitChentanez( double dt )
     // pF_pxi+2
     if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i], kNeedle);
 
+    // testcopy
+    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx_new, x[i-2], x[i-1], x[i], kNeedle);
+    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx_new, x[i-1], x[i], x[i+1], kNeedle);
+    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx_new, x[i], x[i+1], x[i+2], kNeedle);
+
+    // pF_pxi+1
+    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx_new, x[i-1], x[i], x[i+1], kNeedle);
+    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx_new, x[i], x[i+1], x[i+2], kNeedle);
+
+    // pF_pxi+2
+    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx_new, x[i], x[i+1], x[i+2], kNeedle);
+
+    // pF_pxi-1
+    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx_new, x[i-1], x[i], x[i+1], kNeedle);
+    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx_new, x[i-2], x[i-1], x[i], kNeedle);
+
+    // pF_pxi+2
+    if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx_new, x[i-2], x[i-1], x[i], kNeedle);
+
     /*if(i>0 && i < n-1) {
 
 
@@ -247,9 +345,10 @@ void BendingNeedleModel::simulateImplicitChentanez( double dt )
 
   spring_JacobianMatrixAdd( (n-1)*3, (n-1)*3, dF_dx, x[n-1], sX, kSpring ); 
 
-  dF_dx *= 1.0;
+  //dF_dx *= 1.0;
   //dF_dx.transpose();
   if(debugOut) std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
+  if(debugOut) std::cout<<"dF_dx_new: "<<std::endl<<dF_dx_new<<std::endl;
 
   // fill the Jacobian dF_dv
   /*
