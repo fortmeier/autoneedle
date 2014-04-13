@@ -11,7 +11,6 @@ private:
   int bandwidth_2;
   int offset;
 
-  double& _at(int i, int j);
 
 public:
   SparseDiagonalMatrix( int m, int b );
@@ -19,10 +18,15 @@ public:
 
   void zero();
 
-  double& operator() (int i, int j);
+  double& operator() (int i, int j) const;
+  
+  double& _at(int i, int j) const;
 
-  cml::vectord operator* (cml::vectord x);
+  cml::vectord operator* (const cml::vectord& x) const;
 
-  friend std::ostream& operator<< ( std::ostream &out, SparseDiagonalMatrix &matrix );
+  friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix );
+
+  int getSize();
+  int getBandwidth();
 
 };

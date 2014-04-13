@@ -4,30 +4,67 @@
 
 
 #include <iostream>
+#include <map>
 
 #include "mathheader.h"
 #include "sparsediagonalmatrix.h"
 
-// todo add constructor for diagonal matrix
+
+class NeedleMatrix
+{
+private:
+  int numNodes;
+  int numLagrangeModifiers;
+  SparseDiagonalMatrix A;
+
+  std::map<int, Vector > modifierNormals;
+
+  mutable cml::vectord r_b;
+  mutable cml::vectord r_lambda;
+  mutable cml::vectord r;
+
+  void updateRow( int j );
+public:
+  NeedleMatrix( int numNodes );
+  cml::vectord operator* (const cml::vectord& x) const;
+  SparseDiagonalMatrix& getSystemMatrix();
+
+};
 
 class BendingNeedleModel
 {
 private:
+  typedef cml::vectord NeedleVector;
   int numNodes;
-  SparseDiagonalMatrix dF_dx_new;
+  NeedleMatrix A;
+  NeedleVector b;
 
-  std::vector<Vector> x;
-  std::vector<Vector> f;
-  std::vector<Vector> v;
-  std::vector<Vector> a;
+  SparseDiagonalMatrix dF_dx;
+  SparseDiagonalMatrix dF_dv;
+
+  std::vector<Vector> nodes;
+
+  cml::vectord x; // positions from last step
+  cml::vectord v; // velocities from last step
+  cml::vectord ao; // accelerations from last step
+  cml::vectord ap; // accelerations from last step
+
+  cml::vectord m; // accelerations from last step
 
   Vector calcF(int i, double k);
   Vector calcFNext(int i, double k);
   Vector calcFPrev(int i, double k);
   Vector calcSpring(Vector a, Vector b, double k);
-  void cg(const cml::matrixd_r& A, const cml::vectord& b, cml::vectord& x );
+  void cg( );
+
+  void updateJacobianForce();
+  void updateJacobianVelocity();
+  void updateSystemMatrix_A();
+  void updateResultVector_b();
+  double updateStep();
 
   double totaltime;
+  double dt;
 
   bool debugOut;
 

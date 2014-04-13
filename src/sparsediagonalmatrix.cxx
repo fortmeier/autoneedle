@@ -27,7 +27,7 @@ void SparseDiagonalMatrix::zero()
   }
 }
 
-std::ostream& operator<< ( std::ostream &out, SparseDiagonalMatrix &matrix )
+std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix )
 {
   for( int j = 0; j < matrix.size; j++ )
   {
@@ -52,19 +52,19 @@ std::ostream& operator<< ( std::ostream &out, SparseDiagonalMatrix &matrix )
   return out;
 }
 
-double& SparseDiagonalMatrix::_at( int i, int j )
+double& SparseDiagonalMatrix::_at( int i, int j ) const
 {
   return values[ i + bandwidth*j ];
 }
 
-double& SparseDiagonalMatrix::operator() ( int i, int j )
+double& SparseDiagonalMatrix::operator() ( int i, int j ) const
 {
   if( j <= bandwidth_2) return _at(i,j);
   else if( j >= size - bandwidth_2) return _at(i-size+bandwidth,j);
   return _at(i-j+bandwidth_2,j);
 }
 
-cml::vectord SparseDiagonalMatrix::operator* (cml::vectord x)
+cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
 {
   cml::vectord r(x.size());
 
@@ -131,3 +131,15 @@ void testMatrix() {
   exit(0);
 
 }
+
+int SparseDiagonalMatrix::getSize()
+{
+  return size;
+}
+
+
+int SparseDiagonalMatrix::getBandwidth()
+{
+  return bandwidth;
+}
+
