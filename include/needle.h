@@ -19,10 +19,6 @@ private:
 
   std::map<int, Vector > modifierNormals;
 
-  mutable cml::vectord r_b;
-  mutable cml::vectord r_lambda;
-  mutable cml::vectord r;
-
   void updateRow( int j );
 public:
   NeedleMatrix( int numNodes );

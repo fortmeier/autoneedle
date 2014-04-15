@@ -10,10 +10,7 @@
 NeedleMatrix::NeedleMatrix( int nNodes ) :
   numNodes( nNodes ),
   numLagrangeModifiers( 0 ), // no lagrange modifiers at initialization 
-  A( numNodes*3, 5*3 ),
-  r_b( nNodes * 3 ),
-  r_lambda( 0 ), // no lagrange modifiers at initialization
-  r( nNodes * 3 )
+  A( numNodes*3, 5*3 )
 {
 
 }
@@ -21,16 +18,21 @@ NeedleMatrix::NeedleMatrix( int nNodes ) :
 cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
 {
   assert( "length of vector is not okay!" && x.size() == numNodes * 3 + numLagrangeModifiers );
-  if( r_lambda.size() != numLagrangeModifiers ) assert ("not implemented yet!" && false );
+  //if( r_lambda.size() != numLagrangeModifiers ) assert ("not implemented yet!" && false );
+
+  //std::cout<<"x: "<<x<<std::endl;
 
   cml::vectord x_needle = x;
-//  std::cout<<x_needle<<std::endl;
+  //std::cout<<"x_needle: "<<x_needle<<std::endl;
   x_needle.resize( numNodes * 3);
 //  std::cout<<"x_needle: "<<x_needle<<std::endl;
-  r_b = A * x_needle;
-//  std::cout<<x_needle<<std::endl;
-//  std::cout<<"r_b: "<<r_b<<std::endl;
+  // first compute result of sparse diagonal matrix;
+  cml::vectord r = A * x_needle;
 
+  r.resize( numNodes * 3 + numLagrangeModifiers );
+//  std::cout<<x_needle<<std::endl;
+  //std::cout<<"r: "<<r<<std::endl;
+  
 /* todo readd lagrange multipliers
     // add lagrange multipliers
   for(int i = 0; i < n; i++) 
@@ -56,12 +58,13 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
 
   } */
 
-  size_t size_r_b = numNodes * 3 * sizeof(double); 
+  return r;
+/*  size_t size_r_b = numNodes * 3 * sizeof(double); 
   memcpy( r.data(), r_b.data(), size_r_b );
 
   size_t size_r_lambda = numLagrangeModifiers * sizeof(double);
   std::memcpy( r.data() + size_r_b, r_lambda.data(), size_r_lambda);
-  return x;
+  return x;*/
 }
 
 SparseDiagonalMatrix& NeedleMatrix::getSystemMatrix()
@@ -153,6 +156,7 @@ Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k)
 void BendingNeedleModel::cg()
 {
   cml::vectord& x = ap;
+
   cml::vectord r = b - A * x;
 
   cml::vectord p = r;
@@ -164,8 +168,8 @@ void BendingNeedleModel::cg()
   int i = 0;
   do {
     cml::vectord Ap = A * p;
-    std::cout<<"1:"<<p<<std::endl;
-    std::cout<<"2:"<<Ap<<std::endl;
+    //std::cout<<"1:"<<p<<std::endl;
+    //std::cout<<"2:"<<Ap<<std::endl;
     double alpha = rsold/cml::dot(p,Ap);
     x = x + alpha * p;
     r = r-alpha*Ap;
@@ -173,7 +177,7 @@ void BendingNeedleModel::cg()
     p=r+p*(rsnew/rsold);
     rsold=rsnew; 
     i++;
-
+    //std::cout<<i<<": "<<rsnew<<std::endl;
   } while (sqrt(rsnew) > eps && i < 1000);
   std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 }
@@ -261,10 +265,10 @@ void BendingNeedleModel::updateSystemMatrix_A()
   {
     for(int i = 0; i < A.getSystemMatrix().getBandwidth(); i++)
     {
-      double a = -(dF_dx(i,j)* dt * dt * 0.25) - (dF_dv(i,j) * dt * 0.5);
+      double a = -(dF_dx._at(i,j)* dt * dt * 0.25) - (dF_dv._at(i,j) * dt * 0.5);
       A.getSystemMatrix()._at(i,j) = a;
     }
-    A.getSystemMatrix()._at(j,j) += m[j];
+    A.getSystemMatrix()(j,j) += m[j];
   }
   if(debugOut) std::cout<<"A: "<<std::endl<<A.getSystemMatrix()<<std::endl;
 
@@ -430,7 +434,7 @@ void BendingNeedleModel::simulateImplicitChentanez( double _dt )
   double error = updateStep();
 
   if(debugOut) std::cout<<"x: "<<std::endl<<x<<std::endl;
-  if(debugOut) std::cout<<"v: "<<std::endl<<x<<std::endl;
+  if(debugOut) std::cout<<"v: "<<std::endl<<v<<std::endl;
   if(debugOut) std::cout<<"ap: "<<std::endl<<ap<<std::endl;
 
 
