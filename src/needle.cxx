@@ -9,7 +9,6 @@
 
 NeedleMatrix::NeedleMatrix( int nNodes ) :
   numNodes( nNodes ),
-  numLagrangeModifiers( 0 ), // no lagrange modifiers at initialization 
   A( numNodes*3, 5*3 )
 {
 
@@ -17,19 +16,44 @@ NeedleMatrix::NeedleMatrix( int nNodes ) :
 
 cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
 {
+  int numLagrangeModifiers = modifiers.size();
+  //std::cout<<x.size()<<" vs. "<<numNodes * 3 + numLagrangeModifiers<<std::endl;
+
   assert( "length of vector is not okay!" && x.size() == numNodes * 3 + numLagrangeModifiers );
   //if( r_lambda.size() != numLagrangeModifiers ) assert ("not implemented yet!" && false );
 
   //std::cout<<"x: "<<x<<std::endl;
 
-  cml::vectord x_needle = x;
-  //std::cout<<"x_needle: "<<x_needle<<std::endl;
-  x_needle.resize( numNodes * 3);
-//  std::cout<<"x_needle: "<<x_needle<<std::endl;
   // first compute result of sparse diagonal matrix;
-  cml::vectord r = A * x_needle;
-
+  cml::vectord r = A * x;
+  //std::cout<<"r1: "<<r<<std::endl;
   r.resize( numNodes * 3 + numLagrangeModifiers );
+  //std::cout<<"r2: "<<r<<std::endl;
+  int n = numNodes;
+  // add multiplication with lagrange modifiers
+  for( Modifiers::const_iterator iter = modifiers.begin(); iter != modifiers.end(); iter++ )
+  {
+    int i = iter->first;
+    
+    // add multipliciation from elements in rows of matrix A
+    r[i*3+0] += iter->second[0] * x[n*3+i];
+    r[i*3+1] += iter->second[1] * x[n*3+i];
+    r[i*3+2] += iter->second[2] * x[n*3+i];
+
+    // add sum of multiplications of lagrange modifiers and x for last rows
+    r[n*3+i]  = iter->second[0] * x[i*3+0];
+    r[n*3+i] += iter->second[1] * x[i*3+1];
+    r[n*3+i] += iter->second[2] * x[i*3+2];
+
+    /*A(n*3+i, i*3+0) = N[0];
+    A(n*3+i, i*3+1) = N[1];
+    A(n*3+i, i*3+2) = N[2];
+
+    A(i*3+0, n*3+i) = N[0];
+    A(i*3+1, n*3+i) = N[1];
+    A(i*3+2, n*3+i) = N[2];*/
+  }
+
 //  std::cout<<x_needle<<std::endl;
   //std::cout<<"r: "<<r<<std::endl;
   
@@ -70,6 +94,11 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
 SparseDiagonalMatrix& NeedleMatrix::getSystemMatrix()
 {
   return A;
+}
+
+NeedleMatrix::Modifiers& NeedleMatrix::getLagrangeModifiers()
+{
+  return modifiers;
 }
 
 
@@ -155,9 +184,14 @@ Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k)
 
 void BendingNeedleModel::cg()
 {
-  cml::vectord& x = ap;
+  //std::cout<<"Starting CG"<<std::endl;
+  cml::vectord x = ap;
+  //std::cout<<"b:"<<b<<std::endl;
+  x.resize(b.size());
 
   cml::vectord r = b - A * x;
+
+  //std::cout<<"r: "<<r<<std::endl;
 
   cml::vectord p = r;
 
@@ -180,6 +214,11 @@ void BendingNeedleModel::cg()
     //std::cout<<i<<": "<<rsnew<<std::endl;
   } while (sqrt(rsnew) > eps && i < 1000);
   std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
+
+  //x.resize(ap.size());
+  for(int i = 0; i < ap.size(); i++){
+    ap[i] = x[i];
+  }
 }
 
 void BendingNeedleModel::updateJacobianForce()
@@ -307,12 +346,13 @@ void BendingNeedleModel::updateResultVector_b()
 
   }
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
+
 }
 
 double BendingNeedleModel::updateStep()
 {
   // length enforcement
-  bool useEnforcement = false;
+  bool useEnforcement = true;
 
   double error = 0;
   int n = numNodes;
@@ -439,6 +479,17 @@ void BendingNeedleModel::simulateImplicitChentanez( double _dt )
 
 
   std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
+}
+
+void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
+{
+  A.getLagrangeModifiers()[nodeIndex] = N;
+  b.resize(numNodes * 3 + A.getLagrangeModifiers().size() );
+  b.zero();
+  std::cout<<"b size 2 "<<b.size()<<std::endl;
+
+  
+
 }
 
 const std::vector<Vector>& BendingNeedleModel::getX() const

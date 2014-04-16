@@ -12,18 +12,23 @@
 
 class NeedleMatrix
 {
+public:
+  typedef std::map<int, Vector > Modifiers;
+
 private:
   int numNodes;
-  int numLagrangeModifiers;
+  //int numLagrangeModifiers;
   SparseDiagonalMatrix A;
 
-  std::map<int, Vector > modifierNormals;
+  Modifiers modifiers;
 
   void updateRow( int j );
 public:
+
   NeedleMatrix( int numNodes );
   cml::vectord operator* (const cml::vectord& x) const;
   SparseDiagonalMatrix& getSystemMatrix();
+  Modifiers& getLagrangeModifiers();
 
 };
 
@@ -71,5 +76,7 @@ private:
 public:
   BendingNeedleModel();
   void simulateImplicitChentanez( double dt );
+  void addLagrangeModifier( int nodeIndex, Vector N );
   const std::vector<Vector>& getX() const;
+
 };
