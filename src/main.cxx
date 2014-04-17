@@ -77,14 +77,8 @@ int main(int argi, char** argv)
 
   r = new Rendering();
 
-
   needle.addLagrangeModifier(0, Vector(0,1,0));
   needle.addLagrangeModifier(1, Vector(0,1,0));
-
-  needle.addLagrangeModifier(2, Vector(1,0,0));
-  needle.addLagrangeModifier(3, Vector(1,0,0));
-  needle.addLagrangeModifier(4, Vector(1,0,0));
-  needle.addLagrangeModifier(5, Vector(1,0,0));
 
   r->setup();
   r->setCallback( simulate );

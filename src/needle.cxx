@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstring>
 
+#include <stdexcept>
+
 #include "needle.h"
 #include "generatedCode.h"
 
@@ -103,7 +105,7 @@ NeedleMatrix::Modifiers& NeedleMatrix::getLagrangeModifiers()
 
 
 BendingNeedleModel::BendingNeedleModel() :
-  numNodes( 6 ),
+  numNodes( 10 ),
   A( numNodes ),
   b( numNodes ),
   dF_dx( numNodes*3, 5*3 ),
@@ -115,9 +117,9 @@ BendingNeedleModel::BendingNeedleModel() :
   ap(numNodes*3), // accelerations from last step
   m(numNodes*3), // mass of node in x y z direction
   totaltime( 0 ),
-  debugOut( true ),
+  debugOut( false ),
   kSpring(1.0),
-  kNeedle(1000.0)
+  kNeedle(100.0)
 {
 
   //testMatrix();
@@ -132,6 +134,11 @@ BendingNeedleModel::BendingNeedleModel() :
      m[i*3+1] = 0.001;
      m[i*3+2] = 0.001;
 
+  }
+
+  for(int i = 0; i < numNodes; i++)
+  {
+    addLagrangeModifier(i, Vector(1,0,0));
   }
 
 }
@@ -345,6 +352,10 @@ void BendingNeedleModel::updateResultVector_b()
     b[i*3 + 2] += f[2];
 
   }
+  for(int i = 0; i < A.getLagrangeModifiers().size(); i++)
+  {
+    b[numNodes*3+i]=0;
+  }
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 
 }
@@ -401,35 +412,61 @@ double BendingNeedleModel::updateStep()
     v[ix] += dt*(0.5*ao[ix] + 0.5*ap[ix]);
     v[iy] += dt*(0.5*ao[iy] + 0.5*ap[iy]);
     v[iz] += dt*(0.5*ao[iz] + 0.5*ap[iz]);
+  }
+  // length enforcement
+
+  if(useEnforcement) 
+  {
+    for(int i = 1; i < n; i++)
+    {
+      int ix = i * 3 + 0;
+      int iy = ix + 1;
+      int iz = ix + 2;
+
+      Vector N = nodes[i]-nodes[i-1];
+      N.normalize();
+      if(i>1)
+      {
+        // change direction of lagrange modifier normal
+        A.getLagrangeModifiers()[i] = N;
+      }
+
+      Vector V = Vector(v[ix], v[iy], v[iz]);
+      Vector dV = cml::dot(N,V) * N;
+      v[ix] -= dV[0];
+      v[iy] -= dV[1];
+      v[iz] -= dV[2];
+
+      double l = 1.0;
+      Vector X0 = Vector(x[ix], x[iy], x[iz]);
+      Vector X1 = Vector(x[ix-3], x[iy-3], x[iz-3]);
+      Vector dX = N * ((X1-X0).length() - l);
+      x[ix] -= dX[0];
+      x[iy] -= dX[1];
+      x[iz] -= dX[2];
+
+    
+    }
+  }
+
+  // additional damping (to be sure...)
+  for(int i = 0; i < n*3; i++)
+  {
+    ap[i] *= 0.99;
+    v[i] *= 0.99;
+  }
+
+  // update node positions based on x
+  for(int i = 0; i < n; i++)
+  {
+    int ix = i * 3 + 0;
+    int iy = ix + 1;
+    int iz = ix + 2;
 
     nodes[i][0] = x[ix];
     nodes[i][1] = x[iy];
     nodes[i][2] = x[iz];
   }
-  // todo readd errorcalc  r += pow(a[i][0]-ap[i*3 + 0], 2) + pow(a[i][1]-ap[i*3 + 1], 2) + pow(a[i][2]-ap[i*3 + 2], 2);
-
-  // length enforcement
-  /* todo readd
-  if(useEnforcement) 
-  {
-  for(int i = 1; i < n; i++)
-  {
-    Vector N = x[i]-x[i-1];
-    N.normalize();
-    Vector p = cml::dot(N,v[i]) * N;
-    v[i] -= p;
-
-    double l = 1.0;
-    x[i] -= N * ((x[i]-x[i-1]).length() - l);
-    
-  }
-  }
-  */
-  /*for(int i = 0; i < n; i++)
-  {
-    ap[i] *= 0.99;
-    v[i] *= 0.99;
-  }*/
 
   return error;
 }
@@ -479,6 +516,8 @@ void BendingNeedleModel::simulateImplicitChentanez( double _dt )
 
 
   std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
+
+  if( error != error ) throw std::runtime_error("error is NaN!");
 }
 
 void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
