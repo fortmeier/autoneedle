@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 FIND_PACKAGE(VTK REQUIRED)
 
+FIND_PACKAGE(GTest REQUIRED)
+
 INCLUDE(${VTK_USE_FILE})
 
 
@@ -25,18 +27,23 @@ ADD_CUSTOM_TARGET(
 )
 
 SET( source
-  src/main.cxx
   src/needle.cxx
   src/sparsediagonalmatrix.cxx
-  src/Rendering.cxx
 )
 
 INCLUDE_DIRECTORIES(
   gen_src/
   3rdparty/cml-1_0_2/
   include/
+  ${GTEST_INCLUDE_DIR}
 )
 
-ADD_EXECUTABLE( autoneedle ${source} )
-ADD_DEPENDENCIES( autoneedle generatedCode )  
+ADD_LIBRARY( needlelib ${source} )
+ADD_DEPENDENCIES( needlelib generatedCode )  
+
+ADD_EXECUTABLE( autoneedle src/main.cxx src/Rendering.cxx)
 TARGET_LINK_LIBRARIES(autoneedle ${VTK_LIBRARIES})
+TARGET_LINK_LIBRARIES(autoneedle needlelib)
+
+ADD_EXECUTABLE( tests ${source} tests/testing.cxx)
+TARGET_LINK_LIBRARIES( tests ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY} pthread )
