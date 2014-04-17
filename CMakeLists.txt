@@ -28,6 +28,7 @@ ADD_CUSTOM_TARGET(
 
 SET( source
   src/needle.cxx
+  src/needlematrix.cxx
   src/sparsediagonalmatrix.cxx
 )
 
