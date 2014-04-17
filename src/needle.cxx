@@ -125,7 +125,7 @@ void BendingNeedleModel::cg()
     i++;
     //std::cout<<i<<": "<<rsnew<<std::endl;
   } while (sqrt(rsnew) > eps && i < 1000);
-  std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
+  if(debugOut) std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 
   //x.resize(ap.size());
   for(int i = 0; i < ap.size(); i++){
@@ -420,7 +420,7 @@ void BendingNeedleModel::simulateImplicitChentanez( double _dt )
   if(debugOut) std::cout<<"ap: "<<std::endl<<ap<<std::endl;
 
 
-  std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
+  if(debugOut) std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
 
   if( error != error ) throw std::runtime_error("error is NaN!");
 }
@@ -430,7 +430,7 @@ void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
   A.getLagrangeModifiers()[nodeIndex] = N;
   b.resize(numNodes * 3 + A.getLagrangeModifiers().size() );
   b.zero();
-  std::cout<<"b size 2 "<<b.size()<<std::endl;
+  if(debugOut) std::cout<<"b size 2 "<<b.size()<<std::endl;
 
   
 
