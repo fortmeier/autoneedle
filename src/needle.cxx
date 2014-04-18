@@ -8,6 +8,14 @@
 #include "needle.h"
 #include "generatedCode.h"
 
+Spring::Spring( Vector _x, double _k ) :
+  x( _x ),
+  k( _k )
+{
+
+}
+
+
 
 BendingNeedleModel::BendingNeedleModel() :
   numNodes( 10 ),
@@ -24,7 +32,7 @@ BendingNeedleModel::BendingNeedleModel() :
   totaltime( 0 ),
   debugOut( false ),
   kSpring(1.0),
-  kNeedle(1000.0),
+  kNeedle(10.0),
   segmentLength(1.0),
   baseDirection(1,0,0),
   basePosition(0,0,0)
@@ -192,7 +200,11 @@ void BendingNeedleModel::updateJacobianForce()
   } 
 
   //todo readd: spring_JacobianMatrixAdd( (n-1)*3, (n-1)*3, dF_dx, x[n-1], sX, kSpring ); 
-
+  for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
+  {
+    int i = iter->first;
+    spring_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, iter->second.k ); 
+  }
   //dF_dx *= 1.0;
   //dF_dx.transpose();
   if(debugOut) std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
@@ -265,6 +277,8 @@ void BendingNeedleModel::updateResultVector_b()
       f += FP;
     }*/
 
+
+
     b[i*3 + 0] += f[0]; 
     b[i*3 + 1] += f[1]; 
     b[i*3 + 2] += f[2];
@@ -274,6 +288,15 @@ void BendingNeedleModel::updateResultVector_b()
   {
     b[numNodes*3+i]=0;
   }
+  for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
+  {
+    int i = iter->first;
+    Vector fSpring = calcSpring(nodes[i], iter->second.x, iter->second.k);
+    b[i*3+0] += fSpring[0];
+    b[i*3+1] += fSpring[1];
+    b[i*3+2] += fSpring[2];
+    std::cout<<fSpring<<std::endl;
+  } 
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 
 }
@@ -450,6 +473,13 @@ void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
   
 
 }
+
+
+void BendingNeedleModel::setSpring( int nodeIndex, Vector pos, double k )
+{
+  springs[nodeIndex] = Spring( pos, k );
+}
+
 
 const std::vector<Vector>& BendingNeedleModel::getX() const
 {

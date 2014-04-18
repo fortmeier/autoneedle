@@ -9,6 +9,15 @@
 #include "mathheader.h"
 #include "needlematrix.h"
 
+class Spring
+{
+public:
+  Vector x;
+  double k;
+
+  Spring( Vector x = Vector(0,0,0), double k = 0);
+};
+
 class BendingNeedleModel
 {
 private:
@@ -21,6 +30,9 @@ private:
   SparseDiagonalMatrix dF_dv;
 
   std::vector<Vector> nodes;
+
+  typedef std::map<int, Spring> SpringMap;
+  SpringMap springs;
 
   cml::vectord x; // positions from last step
   cml::vectord v; // velocities from last step
@@ -59,6 +71,9 @@ public:
   BendingNeedleModel();
   double simulateImplicitChentanez( double dt );
   void addLagrangeModifier( int nodeIndex, Vector N );
+
+  void setSpring( int nodeIndex, Vector pos, double k );
+
   const std::vector<Vector>& getX() const;
 
   void setBasePosition( const Vector& pos );
