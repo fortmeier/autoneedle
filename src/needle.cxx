@@ -17,8 +17,8 @@ Spring::Spring( Vector _x, double _k ) :
 
 
 
-BendingNeedleModel::BendingNeedleModel() :
-  numNodes( 10 ),
+BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
+  numNodes( nNum ),
   A( numNodes ),
   b( numNodes ),
   dF_dx( numNodes*3, 5*3 ),
@@ -31,9 +31,8 @@ BendingNeedleModel::BendingNeedleModel() :
   m(numNodes*3), // mass of node in x y z direction
   totaltime( 0 ),
   debugOut( false ),
-  kSpring(1.0),
-  kNeedle(10.0),
-  segmentLength(1.0),
+  kNeedle(k),
+  segmentLength(length/(double)(numNodes-1)),
   baseDirection(1,0,0),
   basePosition(0,0,0)
 {
@@ -41,7 +40,7 @@ BendingNeedleModel::BendingNeedleModel() :
   //testMatrix();
   for(int i = 0; i < numNodes; i++)
   {
-     nodes[i] = Vector(i, 0.0f,0);
+     nodes[i] = Vector( (double)i * segmentLength, 0, 0 );
      x[i*3+0] = nodes[i][0];
      x[i*3+1] = nodes[i][1];
      x[i*3+2] = nodes[i][2];
@@ -295,7 +294,7 @@ void BendingNeedleModel::updateResultVector_b()
     b[i*3+0] += fSpring[0];
     b[i*3+1] += fSpring[1];
     b[i*3+2] += fSpring[2];
-    std::cout<<fSpring<<std::endl;
+    //std::cout<<fSpring<<std::endl;
   } 
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 
@@ -378,7 +377,7 @@ double BendingNeedleModel::updateStep()
       v[iy] -= dV[1];
       v[iz] -= dV[2];
 
-      double l = 1.0;
+      double l = segmentLength;
       Vector X0 = Vector(x[ix], x[iy], x[iz]);
       Vector X1 = Vector(x[ix-3], x[iy-3], x[iz-3]);
       Vector dX = N * ((X1-X0).length() - l);

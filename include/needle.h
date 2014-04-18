@@ -58,7 +58,6 @@ private:
 
   bool debugOut;
 
-  double kSpring;
   double kNeedle;
 
   double segmentLength;
@@ -68,7 +67,7 @@ private:
 
 
 public:
-  BendingNeedleModel();
+  BendingNeedleModel( double length, int nodes, double k );
   double simulateImplicitChentanez( double dt );
   void addLagrangeModifier( int nodeIndex, Vector N );
 
