@@ -35,6 +35,9 @@ Rendering* r;
 
 
 bool ex = false;
+
+double yoffset = 0.05;
+double xrot = 0;
 void simulate()
 {
 
@@ -42,13 +45,20 @@ void simulate()
 
   static int c = 0;
 
+
   for(int i = 0; i < 1 && c < 30000; i++)
   {
     c++;
     //simulateExplicit(dt);
     //simulateImplicit(dt);
-    needle.simulateImplicitChentanez(dt);
-    if(c%99 == 0 && c < 400) {
+    double error = needle.simulateImplicitChentanez(dt);
+    std::cout<<c<<" : "<<yoffset<<" : "<<error<<std::endl;
+    xrot += c < 100 ? 0.001 : -0.001;
+
+    needle.setBaseDirection( Vector(1,xrot,0));
+    if(c%99 == 0 && c < 600) {
+      yoffset += yoffset;
+      //needle.setBasePosition( Vector(0,yoffset,0));
       //x[0][1] += 0.1;
       //x[1][1] += 0.1;
     }

@@ -24,7 +24,10 @@ BendingNeedleModel::BendingNeedleModel() :
   totaltime( 0 ),
   debugOut( false ),
   kSpring(1.0),
-  kNeedle(100.0)
+  kNeedle(1000.0),
+  segmentLength(1.0),
+  baseDirection(1,0,0),
+  basePosition(0,0,0)
 {
 
   //testMatrix();
@@ -35,9 +38,9 @@ BendingNeedleModel::BendingNeedleModel() :
      x[i*3+1] = nodes[i][1];
      x[i*3+2] = nodes[i][2];
 
-     m[i*3+0] = 0.001;
-     m[i*3+1] = 0.001;
-     m[i*3+2] = 0.001;
+     m[i*3+0] = 0.0001;
+     m[i*3+1] = 0.0001;
+     m[i*3+2] = 0.0001;
 
   }
 
@@ -202,8 +205,18 @@ void BendingNeedleModel::updateJacobianVelocity()
   // OK dF_dv = -50.5 * M + 0.005 * dF_dx;
   dF_dv.zero();
 
-  double alphaC = 0.0;
-  double betaC = 0.0;
+  double alphaC = -5.0;
+  double betaC = 0.005;
+
+  for(int j = 0; j < dF_dv.getSize(); j++)
+  {
+    for(int i = 0; i < dF_dv.getBandwidth(); i++)
+    {
+      dF_dv._at(i,j) = dF_dx._at(i,j) * betaC;
+    }
+    dF_dv(j,j) += alphaC * m[j];
+  }
+
   if(debugOut) std::cout<<"dF_dv: "<<std::endl<<dF_dv<<std::endl;
 
 }
@@ -376,7 +389,7 @@ double BendingNeedleModel::updateStep()
   return error;
 }
 
-void BendingNeedleModel::simulateImplicitChentanez( double _dt )
+double BendingNeedleModel::simulateImplicitChentanez( double _dt )
 {
   dt = _dt;
   totaltime += dt;
@@ -423,6 +436,8 @@ void BendingNeedleModel::simulateImplicitChentanez( double _dt )
   if(debugOut) std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
 
   if( error != error ) throw std::runtime_error("error is NaN!");
+
+  return error;
 }
 
 void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
@@ -439,4 +454,29 @@ void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
 const std::vector<Vector>& BendingNeedleModel::getX() const
 {
   return nodes;
+}
+
+
+void BendingNeedleModel::setBasePosition( const Vector& pos )
+{
+  basePosition = pos;
+  x[0] = basePosition[0];
+  x[1] = basePosition[1];
+  x[2] = basePosition[2];
+
+  Vector secondPosition = basePosition + baseDirection * segmentLength;
+  x[3] = secondPosition[0];
+  x[4] = secondPosition[1];
+  x[5] = secondPosition[2];
+}
+
+void BendingNeedleModel::setBaseDirection( const Vector& dir )
+{
+  baseDirection = dir;
+  baseDirection.normalize();
+
+  Vector secondPosition = basePosition + baseDirection * segmentLength;
+  x[3] = secondPosition[0];
+  x[4] = secondPosition[1];
+  x[5] = secondPosition[2];
 }

@@ -49,11 +49,19 @@ private:
   double kSpring;
   double kNeedle;
 
+  double segmentLength;
+
+  Vector baseDirection;
+  Vector basePosition;
+
 
 public:
   BendingNeedleModel();
-  void simulateImplicitChentanez( double dt );
+  double simulateImplicitChentanez( double dt );
   void addLagrangeModifier( int nodeIndex, Vector N );
   const std::vector<Vector>& getX() const;
+
+  void setBasePosition( const Vector& pos );
+  void setBaseDirection( const Vector& dir );
 
 };
