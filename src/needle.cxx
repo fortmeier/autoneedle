@@ -485,6 +485,11 @@ const std::vector<Vector>& BendingNeedleModel::getX() const
   return nodes;
 }
 
+double BendingNeedleModel::getSegmentLength( ) const
+{
+  return segmentLength;
+}
+
 
 void BendingNeedleModel::setBasePosition( const Vector& pos )
 {

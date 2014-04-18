@@ -7,7 +7,7 @@
 #define numNodes 10
 
 
-BendingNeedleModel needle(18.0, 10, 10.0);
+BendingNeedleModel needle( 150.0, 51, 10000.0 );
 
 
 
@@ -53,7 +53,7 @@ void simulate()
     //simulateImplicit(dt);
     double error = needle.simulateImplicitChentanez(dt);
     std::cout<<c<<" : "<<yoffset<<" : "<<error<<std::endl;
-    switch(10) 
+    switch(20) 
     {
       case 0:
         yoffset -= 0.01;
@@ -99,9 +99,10 @@ int main(int argi, char** argv)
   needle.addLagrangeModifier(0, Vector(0,1,0));
   needle.addLagrangeModifier(1, Vector(0,1,0));
   int last = needle.getX().size()-1;
-  //needle.setSpring( last, Vector( last, 0, 0 ), 0.1 );
-  //needle.setSpring( last-1, Vector( last-1, 0, 0 ), 0.1 );
-  //needle.setSpring( last-2, Vector( last-2, 0, 0 ), 0.1 );
+  double s = needle.getSegmentLength();
+  needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );
+  needle.setSpring( last-1, Vector( (last-1) * s, 0, 0 ), 0.1 );
+  needle.setSpring( last-2, Vector( (last-2) * s, 0, 0 ), 0.1 );
 
   r->setup();
   r->setCallback( simulate );

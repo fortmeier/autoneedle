@@ -74,8 +74,10 @@ public:
   void setSpring( int nodeIndex, Vector pos, double k );
 
   const std::vector<Vector>& getX() const;
+  double getSegmentLength( ) const;
 
   void setBasePosition( const Vector& pos );
   void setBaseDirection( const Vector& dir );
+
 
 };

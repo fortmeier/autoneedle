@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <vtkProperty.h>
+
 #include "Rendering.h"
 
 Rendering* Rendering::New() {
@@ -70,8 +72,10 @@ void Rendering::setup()
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInput(m_poly);
 
+
   vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
+  actor->GetProperty()->SetPointSize( 3.0 );
 
   renderer->AddActor(actor);
 
