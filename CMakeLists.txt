@@ -46,5 +46,5 @@ ADD_EXECUTABLE( autoneedle src/main.cxx src/Rendering.cxx)
 TARGET_LINK_LIBRARIES(autoneedle ${VTK_LIBRARIES})
 TARGET_LINK_LIBRARIES(autoneedle needlelib)
 
-ADD_EXECUTABLE( tests ${source} tests/testing.cxx)
-TARGET_LINK_LIBRARIES( tests ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY} pthread )
+ADD_EXECUTABLE( tests tests/testing.cxx)
+TARGET_LINK_LIBRARIES( tests ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY} pthread needlelib )
