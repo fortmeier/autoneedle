@@ -7,7 +7,9 @@
 #define numNodes 10
 
 
-BendingNeedleModel needle( 150.0, 51, 10000.0 );
+//BendingNeedleModel needle( 9.0, 10, 10.0 );
+//BendingNeedleModel needle( 9.0, 10, 10.0 );
+BendingNeedleModel needle( 150.0, 31, 10000.0 );
 
 
 
@@ -38,6 +40,8 @@ bool ex = false;
 
 double yoffset = 0.05;
 double xrot = 0;
+double error = 0;
+
 void simulate()
 {
 
@@ -45,32 +49,35 @@ void simulate()
 
   static int c = 0;
 
+  if( error > 100 || error != error ) return;
 
   for(int i = 0; i < 1 && c < 30000; i++)
   {
     c++;
     //simulateExplicit(dt);
     //simulateImplicit(dt);
-    double error = needle.simulateImplicitChentanez(dt);
+    error = needle.simulateImplicitChentanez(dt);
     std::cout<<c<<" : "<<yoffset<<" : "<<error<<std::endl;
-    switch(20) 
+    switch(0) 
     {
       case 0:
-        yoffset -= 0.01;
+        yoffset -= c < 100 ? 1.1 : 0;
         needle.setBasePosition( Vector(0,yoffset,0));
       break;
       case 10:
         xrot += c < 100 ? 0.001 : -0.001;
         needle.setBaseDirection( Vector(1,xrot,0));
       break;
+      case 20:
+        if(c%99 == 0 && c < 1600)
+        {
+          yoffset += yoffset;
+          needle.setBasePosition( Vector(0,yoffset,0));
+        }
+      break;
 
     }
-    if(c%99 == 0 && c < 600) {
-      //yoffset -= 0.1;//yoffset;
-      //needle.setBasePosition( Vector(0,yoffset,0));
-      //x[0][1] += 0.1;
-      //x[1][1] += 0.1;
-    }
+
   // for(int i = 0; i < numNodes; i++)
   // {
   // if(debugOut) {
@@ -84,6 +91,8 @@ void simulate()
 
   }
 
+  std::cout<<"needle length: "<<needle.getTotalLength()<<std::endl;
+
   r->update(needle.getX());
   if(ex) exit(0);
  
@@ -96,13 +105,16 @@ int main(int argi, char** argv)
 
   r = new Rendering();
 
-  needle.addLagrangeModifier(0, Vector(0,1,0));
-  needle.addLagrangeModifier(1, Vector(0,1,0));
+  //needle.addLagrangeModifier(0, Vector(0,1,0));
+  //needle.addLagrangeModifier(1, Vector(0,1,0));
   int last = needle.getX().size()-1;
   double s = needle.getSegmentLength();
-  needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );
-  needle.setSpring( last-1, Vector( (last-1) * s, 0, 0 ), 0.1 );
-  needle.setSpring( last-2, Vector( (last-2) * s, 0, 0 ), 0.1 );
+  //needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );
+  //needle.setSpring( last-1, Vector( (last-1) * s, 0, 0 ), 0.1 );
+  //needle.setSpring( last-2, Vector( (last-2) * s, 0, 0 ), 0.1 );
+
+  needle.setSpring( 0, Vector( 0, 0, 0 ), 200.002 );
+  needle.setSpring( 1, Vector( s, 0, 0 ), 200 );
 
   r->setup();
   r->setCallback( simulate );

@@ -14,7 +14,7 @@ a = symbols('a[0] a[1] a[2]')
 b = symbols('b[0] b[1] b[2]')
 c = symbols('c[0] c[1] c[2]')
 
-k, k1 = symbols('k k1');
+k, k1, l0 = symbols('k k1 l0');
 
 u = ReferenceFrame('u')
 
@@ -41,13 +41,13 @@ s1n=s1/s1.magnitude()
 s2n=s2/s2.magnitude()
 
 #k1 = 1000
-k2 = 0
+k2 = 1000.1
 
 e0 = u2-u1
 e1 = u3-u2
 
-e0d = u.x
-e1d = u.x
+e0d = u.x * l0
+e1d = u.x * l0
 
 
 kbi = (2 * cross(e0, e1)) / (e0d.magnitude()*e1d.magnitude() + e0.dot(e1))
@@ -55,10 +55,12 @@ kbi = (2 * cross(e0, e1)) / (e0d.magnitude()*e1d.magnitude() + e0.dot(e1))
 #alpha = acos(dot(s1n,s2n))
 alpha =  1.0 - dot(s1n,s2n)
 beta = (((u1+u3)*0.5) - u2).magnitude() ** 2
-l1 = (s1.magnitude()-1.0)**2*k2
-l2 = (s2.magnitude()-1.0)**2*k2 
+l1 = (sqrt(dot(s1,s1))-l0)**2*k2
+l2 = (sqrt(dot(s2,s2))-l0)**2*k2 
 ld = e0d.magnitude()+e1d.magnitude();
-E = dot(kbi,kbi)*k1/ld + l1 + l2
+Ebend = dot(kbi,kbi)*k1/ld
+Estretch = l1 + l2
+E = Estretch + Ebend
 
 Espring = (s1.magnitude())**2*k
 
@@ -69,13 +71,13 @@ Fx=-diff(E, b[0])
 Fy=-diff(E, b[1])
 Fz=-diff(E, b[2])
 
-Fx_next=-diff(E, c[0])
-Fy_next=-diff(E, c[1])
-Fz_next=-diff(E, c[2])
+Fx_next=-diff(E, a[0])
+Fy_next=-diff(E, a[1])
+Fz_next=-diff(E, a[2])
 
-code += CodeToC.sympyToCMulti( [("Fx_next", Fx_next), ("Fy_next", Fy_next), ("Fz_next", Fz_next)], ["a", "b", "c"], ["k1"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("Fx_next", Fx_next), ("Fy_next", Fy_next), ("Fz_next", Fz_next)], ["a", "b", "c"], ["k1", "l0"], prefix = "needle_" )
 
-code += CodeToC.sympyToCMulti( [("Fx", Fx), ("Fy", Fy), ("Fz", Fz)], ["a", "b", "c"], ["k1"], prefix = "needle_" )
+code += CodeToC.sympyToCMulti( [("Fx", Fx), ("Fy", Fy), ("Fz", Fz)], ["a", "b", "c"], ["k1", "l0"], prefix = "needle_" )
 
 
 
@@ -96,17 +98,17 @@ def secondDeriv( func, funcname, var1, var2, vectors, scalars, postfix =""):
   return code
 
 
-code += secondDeriv( -E, "needle_Jacobian", b, b, ["a", "b", "c"], ["k1"], "BB")
-code += secondDeriv( -E, "needle_Jacobian", b, a, ["a", "b", "c"], ["k1"], "BA" )
-code += secondDeriv( -E, "needle_Jacobian", b, c, ["a", "b", "c"], ["k1"], "BC" )
+code += secondDeriv( -E, "needle_Jacobian", b, b, ["a", "b", "c"], ["k1", "l0"], "BB")
+code += secondDeriv( -E, "needle_Jacobian", b, a, ["a", "b", "c"], ["k1", "l0"], "BA" )
+code += secondDeriv( -E, "needle_Jacobian", b, c, ["a", "b", "c"], ["k1", "l0"], "BC" )
 
-code += secondDeriv( -E, "needle_Jacobian", a, b, ["a", "b", "c"], ["k1"], "AB")
-code += secondDeriv( -E, "needle_Jacobian", a, a, ["a", "b", "c"], ["k1"], "AA" )
-code += secondDeriv( -E, "needle_Jacobian", a, c, ["a", "b", "c"], ["k1"], "AC" )
+code += secondDeriv( -E, "needle_Jacobian", a, b, ["a", "b", "c"], ["k1", "l0"], "AB")
+code += secondDeriv( -E, "needle_Jacobian", a, a, ["a", "b", "c"], ["k1", "l0"], "AA" )
+code += secondDeriv( -E, "needle_Jacobian", a, c, ["a", "b", "c"], ["k1", "l0"], "AC" )
 
-code += secondDeriv( -E, "needle_Jacobian", c, b, ["a", "b", "c"], ["k1"], "CB")
-code += secondDeriv( -E, "needle_Jacobian", c, a, ["a", "b", "c"], ["k1"], "CA" )
-code += secondDeriv( -E, "needle_Jacobian", c, c, ["a", "b", "c"], ["k1"], "CC" )
+code += secondDeriv( -E, "needle_Jacobian", c, b, ["a", "b", "c"], ["k1", "l0"], "CB")
+code += secondDeriv( -E, "needle_Jacobian", c, a, ["a", "b", "c"], ["k1", "l0"], "CA" )
+code += secondDeriv( -E, "needle_Jacobian", c, c, ["a", "b", "c"], ["k1", "l0"], "CC" )
 
 
 FSx=-diff(Espring, a[0])

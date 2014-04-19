@@ -53,7 +53,7 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
 
   for(int i = 0; i < numNodes; i++)
   {
-    addLagrangeModifier(i, Vector(1,0,0));
+    //addLagrangeModifier(i, Vector(1,0,0));
   }
 
 }
@@ -62,9 +62,9 @@ Vector BendingNeedleModel::calcF(int i, double k)
 {
   std::vector<Vector>& x = nodes;
   Vector f = Vector(
-    needle_Fx(x[i-1],x[i],x[i+1], k),
-    needle_Fy(x[i-1],x[i],x[i+1], k),
-    needle_Fz(x[i-1],x[i],x[i+1], k)
+    needle_Fx(x[i-1],x[i],x[i+1], k, segmentLength),
+    needle_Fy(x[i-1],x[i],x[i+1], k, segmentLength),
+    needle_Fz(x[i-1],x[i],x[i+1], k, segmentLength)
   );
   return  f;
 }
@@ -73,9 +73,9 @@ Vector BendingNeedleModel::calcFNext(int i, double k)
 {
   std::vector<Vector>& x = nodes;
   Vector f = Vector(
-    needle_Fx_next(x[i],x[i+1],x[i+2], k),
-    needle_Fy_next(x[i],x[i+1],x[i+2], k),
-    needle_Fz_next(x[i],x[i+1],x[i+2], k)
+    needle_Fx_next(x[i],x[i+1],x[i+2], k, segmentLength),
+    needle_Fy_next(x[i],x[i+1],x[i+2], k, segmentLength),
+    needle_Fz_next(x[i],x[i+1],x[i+2], k, segmentLength)
   );
   return  f;
 }
@@ -84,9 +84,9 @@ Vector BendingNeedleModel::calcFPrev(int i, double k)
 {
   std::vector<Vector>& x = nodes;
   Vector f = Vector(
-    needle_Fx_next(x[i],x[i-1],x[i-2], k),
-    needle_Fy_next(x[i],x[i-1],x[i-2], k),
-    needle_Fz_next(x[i],x[i-1],x[i-2], k)
+    needle_Fx_next(x[i],x[i-1],x[i-2], k, segmentLength),
+    needle_Fy_next(x[i],x[i-1],x[i-2], k, segmentLength),
+    needle_Fz_next(x[i],x[i-1],x[i-2], k, segmentLength)
   );
   return  f;
 }
@@ -134,7 +134,7 @@ void BendingNeedleModel::cg()
     rsold=rsnew; 
     i++;
     //std::cout<<i<<": "<<rsnew<<std::endl;
-  } while (sqrt(rsnew) > eps && i < 1000);
+  } while (sqrt(rsnew) > eps && i < 10000);
   if(debugOut) std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 
   //x.resize(ap.size());
@@ -152,23 +152,23 @@ void BendingNeedleModel::updateJacobianForce()
     std::vector<Vector>& x = nodes;
 
     // pF_pxi
-    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx, x[i-2], x[i-1], x[i], kNeedle);
-    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx, x[i-1], x[i], x[i+1], kNeedle);
-    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx, x[i], x[i+1], x[i+2], kNeedle);
+    if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
+    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd( i*3, i*3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd( i*3, i*3, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
 
     // pF_pxi+1
-    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1], kNeedle);
-    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2], kNeedle);
+    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd( i*3, i*3+3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd( i*3, i*3+3, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
 
     // pF_pxi+2
-    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx, x[i], x[i+1], x[i+2], kNeedle);
+    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd( i*3, i*3+6, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
 
     // pF_pxi-1
-    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx, x[i-1], x[i], x[i+1], kNeedle);
-    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx, x[i-2], x[i-1], x[i], kNeedle);
+    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd( i*3, i*3-3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=2 && i < n) needle_JacobianCBMatrixAdd( i*3, i*3-3, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
 
     // pF_pxi+2
-    if(i>=2 && i < n) needle_JacobianCCMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i], kNeedle);
+    if(i>=2 && i < n) needle_JacobianCAMatrixAdd( i*3, i*3-6, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
 
 /*    // testcopy
     if(i>=2) needle_JacobianCCMatrixAdd( i*3, i*3, dF_dx_new, x[i-2], x[i-1], x[i], kNeedle);
@@ -216,8 +216,8 @@ void BendingNeedleModel::updateJacobianVelocity()
   // OK dF_dv = -50.5 * M + 0.005 * dF_dx;
   dF_dv.zero();
 
-  double alphaC = -5.0;
-  double betaC = 0.005;
+  double alphaC = -0.0;
+  double betaC = 0.0;
 
   for(int j = 0; j < dF_dv.getSize(); j++)
   {
@@ -275,8 +275,10 @@ void BendingNeedleModel::updateResultVector_b()
       if(true) std::cout<<"offset: "<<sX<<std::endl;
       f += FP;
     }*/
-
-
+/*std::cout<<"calcF("<<i<<") = "<<calcF(i, kNeedle)<<std::endl;
+std::cout<<"calcFPrev("<<i<<") = "<<calcFPrev(i, kNeedle)<<std::endl;
+std::cout<<"calcFNext("<<i<<") = "<<calcFNext(i, kNeedle)<<std::endl;
+*/
 
     b[i*3 + 0] += f[0]; 
     b[i*3 + 1] += f[1]; 
@@ -294,7 +296,7 @@ void BendingNeedleModel::updateResultVector_b()
     b[i*3+0] += fSpring[0];
     b[i*3+1] += fSpring[1];
     b[i*3+2] += fSpring[2];
-    //std::cout<<fSpring<<std::endl;
+    //std::cout<<"fspring!"<<fSpring<<std::endl;
   } 
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 
@@ -303,19 +305,19 @@ void BendingNeedleModel::updateResultVector_b()
 double BendingNeedleModel::updateStep()
 {
   // length enforcement
-  bool useEnforcement = true;
+  bool useEnforcement = false;
 
   double error = 0;
   int n = numNodes;
   
   if(useEnforcement) 
   {
-    ap[0] = 0;
+    /*ap[0] = 0;
     ap[1] = 0;
     ap[2] = 0;
     ap[3] = 0;
     ap[4] = 0;
-    ap[5] = 0;
+    ap[5] = 0;*/
     for(int i = 1; i < n; i++)
     {
       Vector N = nodes[i]-nodes[i-1];
@@ -368,7 +370,7 @@ double BendingNeedleModel::updateStep()
       if(i>1)
       {
         // change direction of lagrange modifier normal
-        A.getLagrangeModifiers()[i] = N;
+        //A.getLagrangeModifiers()[i] = N;
       }
 
       Vector V = Vector(v[ix], v[iy], v[iz]);
@@ -494,14 +496,19 @@ double BendingNeedleModel::getSegmentLength( ) const
 void BendingNeedleModel::setBasePosition( const Vector& pos )
 {
   basePosition = pos;
-  x[0] = basePosition[0];
-  x[1] = basePosition[1];
-  x[2] = basePosition[2];
+  //x[0] = basePosition[0];
+  //x[1] = basePosition[1];
+  //x[2] = basePosition[2];
+
 
   Vector secondPosition = basePosition + baseDirection * segmentLength;
-  x[3] = secondPosition[0];
-  x[4] = secondPosition[1];
-  x[5] = secondPosition[2];
+  //x[3] = secondPosition[0];
+  //x[4] = secondPosition[1];
+  //x[5] = secondPosition[2];
+
+  setSpring(0, basePosition, 2000 );
+  setSpring(1, secondPosition, 2000 );
+
 }
 
 void BendingNeedleModel::setBaseDirection( const Vector& dir )
@@ -510,7 +517,20 @@ void BendingNeedleModel::setBaseDirection( const Vector& dir )
   baseDirection.normalize();
 
   Vector secondPosition = basePosition + baseDirection * segmentLength;
-  x[3] = secondPosition[0];
-  x[4] = secondPosition[1];
-  x[5] = secondPosition[2];
+  //x[3] = secondPosition[0];
+  //x[4] = secondPosition[1];
+  //x[5] = secondPosition[2];
+  setSpring(1, secondPosition, 200 );
+  //A.getLagrangeModifiers()[0] = baseDirection;
+  //A.getLagrangeModifiers()[1] = baseDirection;
+}
+
+double BendingNeedleModel::getTotalLength()
+{
+  double l = 0;
+  for(int i = 0; i < numNodes-1; i++)
+  {
+    l += (nodes[i]-nodes[i+1]).length();
+  }
+  return l;
 }

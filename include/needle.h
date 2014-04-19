@@ -79,5 +79,7 @@ public:
   void setBasePosition( const Vector& pos );
   void setBaseDirection( const Vector& dir );
 
+  double getTotalLength();
+
 
 };
