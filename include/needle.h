@@ -28,15 +28,46 @@
 #include "mathheader.h"
 #include "needlematrix.h"
 
+/**
+ * auxilliary class that repersents a spring which is
+ * attachted to a node of a needle
+ */
 class Spring
 {
 public:
+  /**
+   * position of spring end
+   */
   Vector x;
+
+  /**
+   * spring stiffness
+   */
   double k;
 
   Spring( Vector x = Vector(0,0,0), double k = 0);
 };
 
+/**
+ * A bendable needle.
+ * Can compute deformations and uses concepts from [1-4].
+ *
+ * There are two different modes available. The first is a dynamic mode, which uses
+ * the integration scheme of [1], including inertia.
+ * The second one is a quasi-static mode as used in [2]. ATM, this is not implemented.
+ * Both methods need the computation of a Jacobian. Here, this is supported by
+ * automatic differentiation of the energy terms. See \see GenerateCode.py.
+ *
+ * [1] Chentanez N, Alterovitz R, Ritchie D, Cho L, Hauser KK, Goldberg K, et al. 
+ * Interactive simulation of surgical needle insertion and steering. 
+ * ACM Trans Graph;28(3):1-10. Available from: http://portal.acm.org/citation.cfm?id=1531394
+ *
+ * [2] Goksel et al. ...
+ *
+ * [3] 
+ *
+ * [4]
+ */
 class BendingNeedleModel
 {
 private:
@@ -64,6 +95,11 @@ private:
   Vector calcFNext(int i, double k);
   Vector calcFPrev(int i, double k);
   Vector calcSpring(Vector a, Vector b, double k);
+
+  /**
+   * use the conjugate gradient method to solve a system of
+   * linear equations (Ax=b).
+   */
   void cg( );
 
   void updateJacobianForce();
@@ -81,7 +117,14 @@ private:
 
   double segmentLength;
 
+  /**
+   * position of the needle base
+   */
   Vector baseDirection;
+
+  /**
+   * direction of the needle base
+   */
   Vector basePosition;
 
 

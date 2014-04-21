@@ -40,25 +40,6 @@ Rendering* r;
 
 
 
-/*
-  compute with method of [1]:
-  1. Chentanez N, Alterovitz R, Ritchie D, Cho L, Hauser KK, Goldberg K, et al. 
-  Interactive simulation of surgical needle insertion and steering. 
-  ACM Trans Graph;28(3):1-10. Available from: http://portal.acm.org/citation.cfm?id=1531394
-
-  result should be in the form A ap = b with
-
-  A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
-  b = F + dF_dx * dt * v + dF_dx * dt**2 * ( 0.5 - beta) * a + dF_dv * dt * (1-gamma) * a
-   ?= F + dF_dx * ( dt * v + dt**2 * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
-   ?= F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
-
-*/
-
-
-
-
-
 bool ex = false;
 
 double yoffset = 0.05;

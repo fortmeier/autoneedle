@@ -37,14 +37,19 @@
 #include "mathheader.h"
 
 
+/**
+ * Pretty stupid needle renderer using VTK.
+ * A different renderer using for example OGRE could replace it.
+ */
 
 class Rendering : public vtkCommand
 {
+  private:
+    virtual void Execute(vtkObject *caller, unsigned long eventId, void * vtkNotUsed(callData));
+
   public:
     static Rendering *New();
  
-    virtual void Execute(vtkObject *caller, unsigned long eventId,
-                         void * vtkNotUsed(callData));
 
     void update( const std::vector<Vector> &x );
 

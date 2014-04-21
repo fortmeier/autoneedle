@@ -25,6 +25,30 @@
 
 #include "mathheader.h"
 
+/*
+ * A sparse diagonal matrix only has entries close to the diagonal of the matrix:
+ * | * * 0 0 0 |
+ * | * * * 0 0 |
+ * | 0 * * * 0 |
+ * | 0 0 * * * |
+ * | 0 0 0 * * |
+ * This example is a 5x5 diagonal with a bandwidth of 3 ( only the 3 entries
+ * closest to the diagonal are different from 0).
+ * Here, the matrix is stored as a bandwithd * rows matrix:
+ * | * * * |
+ * | * * * |
+ * | * * * |
+ * | * * * |
+ * | * * * |
+ * This way, there are additional values that can be different from zero in a
+ * few of the first and last rows:
+ * | * * * 0 0 |
+ * | * * * 0 0 |
+ * | 0 * * * 0 |
+ * | 0 0 * * * |
+ * | 0 0 * * * |
+ */
+
 class SparseDiagonalMatrix
 {
 private:
@@ -39,10 +63,21 @@ public:
   SparseDiagonalMatrix( int m, int b );
   ~SparseDiagonalMatrix();
 
+  /**
+   * set the matrix to zero
+   */
   void zero();
 
+  /**
+   * access the matrix a position i,j
+   */
   double& operator() (int i, int j) const;
   
+  /**
+   * access the b x m matrix at position i,j
+   * this is slightly different from () and should only be called when actually needed
+   * or a time costly operation is performed.
+   */
   double& _at(int i, int j) const;
 
   cml::vectord operator* (const cml::vectord& x) const;

@@ -28,6 +28,10 @@
 #include "sparsediagonalmatrix.h"
 
 
+/**
+ * this class represents a combined matrix consisting of a
+ * sparse (diagonal) matrix and Langrage modifiers.
+ */
 class NeedleMatrix
 {
 public:
