@@ -106,6 +106,7 @@ private:
   void updateJacobianVelocity();
   void updateSystemMatrix_A();
   void updateResultVector_b();
+  void addForcesToB();
   double updateStep();
 
   double totaltime;

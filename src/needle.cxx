@@ -42,7 +42,7 @@ Spring::Spring( Vector _x, double _k ) :
 BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   numNodes( nNum ),
   A( numNodes ),
-  b( numNodes ),
+  b( numNodes * 3),
   dF_dx( numNodes*3, 5*3 ),
   dF_dv( numNodes*3, 5*3 ),
   nodes( numNodes ),
@@ -77,6 +77,9 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   {
     //addLagrangeModifier(i, Vector(1,0,0));
   }
+
+  setSpring( 0, Vector( 0, 0, 0 ), 200 );
+  setSpring( 1, Vector( segmentLength, 0, 0 ), 200 );
 
 }
 
@@ -279,6 +282,12 @@ void BendingNeedleModel::updateResultVector_b()
   tmp = (ao * dt * 0.5);
   b += dF_dv * tmp;
 
+  addForcesToB();
+
+}
+
+void BendingNeedleModel::addForcesToB()
+{
   int n = numNodes;
 
   for(int i = 0; i < n; i++)
@@ -321,7 +330,6 @@ std::cout<<"calcFNext("<<i<<") = "<<calcFNext(i, kNeedle)<<std::endl;
     //std::cout<<"fspring!"<<fSpring<<std::endl;
   } 
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
-
 }
 
 double BendingNeedleModel::updateStep()
@@ -482,6 +490,59 @@ double BendingNeedleModel::simulateImplicitDynamic( double _dt )
   if(debugOut) std::cout<<"time: "<<totaltime<<" Error: "<<error<<std::endl; 
 
   if( error != error ) throw std::runtime_error("error is NaN!");
+
+  return error;
+}
+
+double BendingNeedleModel::simulateImplicitStatic( double _dt )
+{
+  double error = 0;
+
+  dt = _dt;
+  totaltime += dt;
+
+  b.zero();
+  A.getSystemMatrix().zero();
+  // Set Matrix A
+  updateJacobianForce();
+
+  for(int j = 0; j < dF_dx.getSize(); j++)
+  {
+    for(int i = 0; i < dF_dx.getBandwidth(); i++)
+    {
+      A.getSystemMatrix()._at(i,j) = dF_dx._at(i,j);
+    }
+  }
+
+  if(debugOut) std::cout<<"A: "<<A.getSystemMatrix()<<std::endl;
+
+  // set vector b
+  addForcesToB();
+  b*=-1.0;
+  if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
+
+  // perform conjugate gradient
+  cg();
+
+  if(debugOut) std::cout<<"ap: "<<ap<<std::endl;
+
+  //x = ap;
+  ap *= dt;
+  if(debugOut) std::cout<<"ap: "<<ap<<std::endl;
+  // update node positions based on x
+  for(int i = 0; i < numNodes; i++)
+  {
+    int ix = i * 3 + 0;
+    int iy = ix + 1;
+    int iz = ix + 2;
+
+    Vector xnew( x[ix]+ap[ix], x[iy]+ap[iy], x[iz]+ap[iz] );
+    error += (xnew-nodes[i]).length();
+    nodes[i] = xnew;
+  }
+  x+=ap;
+  if(debugOut) std::cout<<"x: "<<x<<std::endl;
+
 
   return error;
 }

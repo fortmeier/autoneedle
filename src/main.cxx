@@ -49,7 +49,7 @@ double error = 0;
 void simulate()
 {
 
-  double dt = 0.01;
+  double dt = 0.1;
 
   static int c = 0;
 
@@ -60,16 +60,16 @@ void simulate()
     c++;
     //simulateExplicit(dt);
     //simulateImplicit(dt);
-    error = needle.simulateImplicitDynamic(dt);
+    error = needle.simulateImplicitStatic(dt);
     std::cout<<c<<" : "<<yoffset<<" : "<<error<<std::endl;
-    switch(0) 
+    switch(10) 
     {
       case 0:
-        yoffset -= c < 100 ? 1.1 : 0;
+        yoffset -= c < 20 ? 1.1 : 0;
         needle.setBasePosition( Vector(0,yoffset,0));
       break;
       case 10:
-        xrot += c < 100 ? 0.001 : -0.001;
+        xrot += c < 100 ? 0.1 : -0.001;
         needle.setBaseDirection( Vector(1,xrot,0));
       break;
       case 20:
@@ -95,7 +95,7 @@ void simulate()
 
   }
 
-  std::cout<<"needle length: "<<needle.getTotalLength()<<std::endl;
+  //std::cout<<"needle length: "<<needle.getTotalLength()<<std::endl;
 
   r->update(needle.getX());
   if(ex) exit(0);
@@ -113,10 +113,10 @@ int main(int argi, char** argv)
   //needle.addLagrangeModifier(1, Vector(0,1,0));
   int last = needle.getX().size()-1;
   double s = needle.getSegmentLength();
-  //needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );
-  //needle.setSpring( last-1, Vector( (last-1) * s, 0, 0 ), 0.1 );
-  //needle.setSpring( last-2, Vector( (last-2) * s, 0, 0 ), 0.1 );
-
+  /*needle.setSpring( last, Vector( last * s, 0, 0 ), 10.1 );
+  needle.setSpring( last-1, Vector( (last-1) * s, 0, 0 ), 10.1 );
+  needle.setSpring( last-2, Vector( (last-2) * s, 0, 0 ), 10.1 );
+  */
   needle.setSpring( 0, Vector( 0, 0, 0 ), 200.002 );
   needle.setSpring( 1, Vector( s, 0, 0 ), 200 );
 
