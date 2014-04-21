@@ -130,7 +130,25 @@ private:
 
 public:
   BendingNeedleModel( double length, int nodes, double k );
-  double simulateImplicitChentanez( double dt );
+
+  /**
+   * Use the dynamic simulation.
+   * This first solves A * a+ = b with
+   * A = ( M - dF_dx * dt**2 * beta - dF_dv* dt * gamma)
+   * and
+   * b  = F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
+   * and the uses Newmark's method for the velocity and position update:
+   * See [1].
+   */
+  double simulateImplicitDynamic( double dt );
+
+  /**
+   * Use the static simulation.
+   * This solves K * u = f
+   * See [2].
+   */
+  double simulateImplicitStatic( double dt );
+
   void addLagrangeModifier( int nodeIndex, Vector N );
 
   void setSpring( int nodeIndex, Vector pos, double k );

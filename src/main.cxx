@@ -60,7 +60,7 @@ void simulate()
     c++;
     //simulateExplicit(dt);
     //simulateImplicit(dt);
-    error = needle.simulateImplicitChentanez(dt);
+    error = needle.simulateImplicitDynamic(dt);
     std::cout<<c<<" : "<<yoffset<<" : "<<error<<std::endl;
     switch(0) 
     {

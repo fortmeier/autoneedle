@@ -435,7 +435,7 @@ double BendingNeedleModel::updateStep()
   return error;
 }
 
-double BendingNeedleModel::simulateImplicitChentanez( double _dt )
+double BendingNeedleModel::simulateImplicitDynamic( double _dt )
 {
   dt = _dt;
   totaltime += dt;

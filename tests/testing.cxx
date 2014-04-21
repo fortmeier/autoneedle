@@ -7,7 +7,7 @@ TEST(NeedleTest, MinimalWorkingExample)
   BendingNeedleModel needle( 150.0, 31, 1000.0 );
   for(int i = 0; i < 1000; i++)
   {
-    needle.simulateImplicitChentanez(0.001);
+    needle.simulateImplicitDynamic(0.001);
   }
 }
 TEST(NeedleTest, Stiff)
@@ -15,7 +15,7 @@ TEST(NeedleTest, Stiff)
   BendingNeedleModel needle( 150.0, 31, 10000.0 );
   for(int i = 0; i < 1000; i++)
   {
-    needle.simulateImplicitChentanez(0.001);
+    needle.simulateImplicitDynamic(0.001);
   }
 }
 TEST(NeedleTest, ManyNodes)
@@ -23,7 +23,7 @@ TEST(NeedleTest, ManyNodes)
   BendingNeedleModel needle( 150.0, 51, 1000.0 );
   for(int i = 0; i < 1000; i++)
   {
-    needle.simulateImplicitChentanez(0.001);
+    needle.simulateImplicitDynamic(0.001);
   }
 }
 TEST(NeedleTest, All)
@@ -37,6 +37,6 @@ TEST(NeedleTest, All)
 
   for(int i = 0; i < 1000; i++)
   {
-    needle.simulateImplicitChentanez(0.001);
+    needle.simulateImplicitDynamic(0.001);
   }
 }
