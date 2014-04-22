@@ -128,6 +128,10 @@ private:
    */
   Vector basePosition;
 
+  /**
+   * gravity force vector;
+   */
+  Vector G;
 
 public:
   BendingNeedleModel( double length, int nodes, double k );
@@ -160,7 +164,12 @@ public:
   void setBasePosition( const Vector& pos );
   void setBaseDirection( const Vector& dir );
 
+  void setGravity( const Vector& g );
+
   double getTotalLength();
+
+  void reset();
+
 
 
 };

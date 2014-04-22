@@ -56,22 +56,18 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   kNeedle(k),
   segmentLength(length/(double)(numNodes-1)),
   baseDirection(1,0,0),
-  basePosition(0,0,0)
+  basePosition(0,0,0),
+  G(0, -9.81, 0)
 {
 
   //testMatrix();
   for(int i = 0; i < numNodes; i++)
   {
-     nodes[i] = Vector( (double)i * segmentLength, 0, 0 );
-     x[i*3+0] = nodes[i][0];
-     x[i*3+1] = nodes[i][1];
-     x[i*3+2] = nodes[i][2];
-
      m[i*3+0] = 0.0001;
      m[i*3+1] = 0.0001;
      m[i*3+2] = 0.0001;
-
   }
+  reset();
 
   for(int i = 0; i < numNodes; i++)
   {
@@ -298,7 +294,9 @@ void BendingNeedleModel::addForcesToB()
     if( i > 1 ) f += calcFPrev(i, kNeedle);
     if( i < n-2 ) f += calcFNext(i, kNeedle);
 
-    f[1] += -9.81 * m[i*3+1];
+    f[0] +=  G[0] * m[i*3+1];
+    f[1] +=  G[1] * m[i*3+1];
+    f[2] +=  G[2] * m[i*3+1];
 
     /*if(i==n-1) {
 
@@ -608,6 +606,11 @@ void BendingNeedleModel::setBaseDirection( const Vector& dir )
   //A.getLagrangeModifiers()[1] = baseDirection;
 }
 
+void BendingNeedleModel::setGravity( const Vector& g )
+{
+  G = g;
+}
+
 double BendingNeedleModel::getTotalLength()
 {
   double l = 0;
@@ -616,4 +619,15 @@ double BendingNeedleModel::getTotalLength()
     l += (nodes[i]-nodes[i+1]).length();
   }
   return l;
+}
+
+void BendingNeedleModel::reset()
+{
+  for( int i = 0; i < numNodes; i++ )
+  {
+    nodes[i] = (double)i * segmentLength * baseDirection + basePosition;
+    x[i*3+0] = nodes[i][0];
+    x[i*3+1] = nodes[i][1];
+    x[i*3+2] = nodes[i][2];
+  }
 }

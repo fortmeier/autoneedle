@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+PROJECT(autoneedle)
+
 FIND_PACKAGE(VTK REQUIRED)
 
 FIND_PACKAGE(GTest REQUIRED)
