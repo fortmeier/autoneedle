@@ -43,8 +43,8 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   numNodes( nNum ),
   A( numNodes ),
   b( numNodes * 3),
-  dF_dx( numNodes*3, 5*3 ),
-  dF_dv( numNodes*3, 5*3 ),
+  dF_dx( numNodes*3, 19 ),
+  dF_dv( numNodes*3, 19 ),
   nodes( numNodes ),
   x(numNodes*3), // positions from last step
   v(numNodes*3), // velocities from last step
@@ -270,11 +270,31 @@ void BendingNeedleModel::updateSystemMatrix_A()
 
 }
 
+void dOut( const cml::vectord& d, bool shuffle = false )
+{
+  for(int i = 0; i < d.size() / 3; i++ )
+  {
+    std::cout<<d[i*3+0]<<std::endl;
+    if( shuffle == false )
+    {
+      std::cout<<d[i*3+1]<<std::endl;
+      std::cout<<d[i*3+2]<<std::endl;
+    }
+    else
+    {
+      std::cout<<d[i*3+2]<<std::endl;
+      std::cout<<d[i*3+1]<<std::endl;
+    }
+    std::cout<<""<<std::endl;
+  }
+}
+
 void BendingNeedleModel::updateResultVector_b()
 {
   // fill b: F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
   cml::vectord tmp = (( v + dt * ( 0.25 ) * ao ) * dt);
   b  = dF_dx * tmp;
+  //dOut(b);
   tmp = (ao * dt * 0.5);
   b += dF_dv * tmp;
 
@@ -284,6 +304,7 @@ void BendingNeedleModel::updateResultVector_b()
 
 void BendingNeedleModel::addForcesToB()
 {
+  // std::cout<<b<<std::endl;
   int n = numNodes;
 
   for(int i = 0; i < n; i++)
@@ -294,9 +315,9 @@ void BendingNeedleModel::addForcesToB()
     if( i > 1 ) f += calcFPrev(i, kNeedle);
     if( i < n-2 ) f += calcFNext(i, kNeedle);
 
-    f[0] +=  G[0] * m[i*3+1];
+    f[0] +=  G[0] * m[i*3+0];
     f[1] +=  G[1] * m[i*3+1];
-    f[2] +=  G[2] * m[i*3+1];
+    f[2] +=  G[2] * m[i*3+2];
 
     /*if(i==n-1) {
 
@@ -304,10 +325,10 @@ void BendingNeedleModel::addForcesToB()
       if(true) std::cout<<"offset: "<<sX<<std::endl;
       f += FP;
     }*/
-/*std::cout<<"calcF("<<i<<") = "<<calcF(i, kNeedle)<<std::endl;
-std::cout<<"calcFPrev("<<i<<") = "<<calcFPrev(i, kNeedle)<<std::endl;
-std::cout<<"calcFNext("<<i<<") = "<<calcFNext(i, kNeedle)<<std::endl;
-*/
+    // std::cout<<"calcF("<<i<<") = "<<calcF(i, kNeedle)<<std::endl;
+    // std::cout<<"calcFPrev("<<i<<") = "<<calcFPrev(i, kNeedle)<<std::endl;
+    // std::cout<<"calcFNext("<<i<<") = "<<calcFNext(i, kNeedle)<<std::endl;
+    // std::cout<<"f("<<i<<") = "<<f<<std::endl;
 
     b[i*3 + 0] += f[0]; 
     b[i*3 + 1] += f[1]; 
@@ -325,7 +346,7 @@ std::cout<<"calcFNext("<<i<<") = "<<calcFNext(i, kNeedle)<<std::endl;
     b[i*3+0] += fSpring[0];
     b[i*3+1] += fSpring[1];
     b[i*3+2] += fSpring[2];
-    //std::cout<<"fspring!"<<fSpring<<std::endl;
+    // std::cout<<"fspring!"<<fSpring<<std::endl;
   } 
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 }
@@ -443,6 +464,7 @@ double BendingNeedleModel::updateStep()
 
 double BendingNeedleModel::simulateImplicitDynamic( double _dt )
 {
+
   dt = _dt;
   totaltime += dt;
   int n = numNodes;

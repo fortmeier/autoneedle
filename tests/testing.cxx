@@ -13,7 +13,7 @@ TEST(NeedleTest, MinimalWorkingExample)
   }
 }
 
-TEST(NeedleTest, MinimalWorkingExampleX)
+TEST(NeedleTest, MinimalWorkingExampleXDynamic)
 {
   BendingNeedleModel needle( 150.0, 31, 1000.0 );
   double error = 0;
@@ -25,7 +25,7 @@ TEST(NeedleTest, MinimalWorkingExampleX)
 }
 
 
-TEST(NeedleTest, MinimalWorkingExampleZ)
+TEST(NeedleTest, MinimalWorkingExampleZDynamic)
 {
   BendingNeedleModel needle( 150.0, 31, 1000.0 );
   needle.setBaseDirection(Vector(0,0,1));
@@ -37,6 +37,29 @@ TEST(NeedleTest, MinimalWorkingExampleZ)
   ASSERT_LE( error, 10 );
 }
 
+TEST(NeedleTest, MinimalWorkingExampleXStatic)
+{
+  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  double error = 0;
+  for(int i = 0; i < 1000; i++)
+  {
+    error = needle.simulateImplicitStatic(0.001);
+  }
+  ASSERT_LE( error, 10 );
+}
+
+
+TEST(NeedleTest, MinimalWorkingExampleZStatic)
+{
+  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  needle.setBaseDirection(Vector(0,0,1));
+  double error = 0;
+  for(int i = 0; i < 1000; i++)
+  {
+    error = needle.simulateImplicitStatic(0.001);
+  }
+  ASSERT_LE( error, 10 );
+}
 
 
 

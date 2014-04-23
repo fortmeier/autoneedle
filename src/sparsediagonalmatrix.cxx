@@ -21,16 +21,17 @@
  *
  */
 
- #include <iomanip>
+#include <iomanip>
+#include <exception> 
 
- #include "sparsediagonalmatrix.h"
+#include "sparsediagonalmatrix.h"
 
 SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int b ) :
   size(m),
   bandwidth(b),
   bandwidth_2(b/2)
 {
-
+  if( m < bandwidth_2 ) throw std::runtime_error("bandwitdh / 2 greater than matrix size");
   values = new double[m*bandwidth];
   zero();
 

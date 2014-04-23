@@ -32,7 +32,7 @@
 
 NeedleMatrix::NeedleMatrix( int nNodes ) :
   numNodes( nNodes ),
-  A( numNodes*3, 5*3 )
+  A( numNodes*3, 19 )
 {
 
 }
