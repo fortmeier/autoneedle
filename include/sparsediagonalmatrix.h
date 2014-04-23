@@ -21,6 +21,8 @@
  *
  */
 
+#pragma once
+
 #include <iostream>
 
 #include "mathheader.h"

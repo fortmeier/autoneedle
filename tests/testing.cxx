@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 
 #include "needle.h"
+#include "sparsediagonalmatrix.h"
+
 
 TEST(NeedleTest, MinimalWorkingExample)
 {
@@ -10,6 +12,34 @@ TEST(NeedleTest, MinimalWorkingExample)
     needle.simulateImplicitDynamic(0.001);
   }
 }
+
+TEST(NeedleTest, MinimalWorkingExampleX)
+{
+  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  double error = 0;
+  for(int i = 0; i < 1000; i++)
+  {
+    error = needle.simulateImplicitDynamic(0.001);
+  }
+  ASSERT_LE( error, 10 );
+}
+
+
+TEST(NeedleTest, MinimalWorkingExampleZ)
+{
+  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  needle.setBaseDirection(Vector(0,0,1));
+  double error = 0;
+  for(int i = 0; i < 1000; i++)
+  {
+    error = needle.simulateImplicitDynamic(0.001);
+  }
+  ASSERT_LE( error, 10 );
+}
+
+
+
+
 TEST(NeedleTest, Stiff)
 {
   BendingNeedleModel needle( 150.0, 31, 10000.0 );

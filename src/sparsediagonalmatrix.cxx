@@ -21,6 +21,8 @@
  *
  */
 
+ #include <iomanip>
+
  #include "sparsediagonalmatrix.h"
 
 SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int b ) :
@@ -54,20 +56,23 @@ std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix
 {
   for( int j = 0; j < matrix.size; j++ )
   {
+    int remaining = matrix.size;
     out << "[ ";
     for( int k = matrix.bandwidth_2; k < j && k < matrix.size - matrix.bandwidth_2-1; k++) 
     {
-      out << ". ";
+      out << "   . ";
+      remaining--;
     }
 
     for( int i = 0; i < matrix.bandwidth; i++ )
     {
-      out << matrix._at(i,j) << " ";
+      out << std::setw( 4 ) << matrix._at(i,j) << " ";
+      remaining--;
     }
 
-    for( int k = matrix.bandwidth; k < matrix.size - j -1 && k < matrix.size - matrix.bandwidth; k++) 
+    for( int k = 0; k < remaining; k++ ) 
     {
-      out << ". ";
+      out << "   . ";
     }
 
     out << " ]\n";
