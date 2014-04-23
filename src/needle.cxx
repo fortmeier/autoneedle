@@ -79,9 +79,9 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
 
 }
 
-Vector BendingNeedleModel::calcF(int i, double k)
+Vector BendingNeedleModel::calcF(int i, double k) const
 {
-  std::vector<Vector>& x = nodes;
+  const std::vector<Vector>& x = nodes;
   Vector f = Vector(
     needle_Fx(x[i-1],x[i],x[i+1], k, segmentLength),
     needle_Fy(x[i-1],x[i],x[i+1], k, segmentLength),
@@ -90,9 +90,9 @@ Vector BendingNeedleModel::calcF(int i, double k)
   return  f;
 }
 
-Vector BendingNeedleModel::calcFNext(int i, double k)
+Vector BendingNeedleModel::calcFNext(int i, double k) const
 {
-  std::vector<Vector>& x = nodes;
+  const std::vector<Vector>& x = nodes;
   Vector f = Vector(
     needle_Fx_next(x[i],x[i+1],x[i+2], k, segmentLength),
     needle_Fy_next(x[i],x[i+1],x[i+2], k, segmentLength),
@@ -101,9 +101,9 @@ Vector BendingNeedleModel::calcFNext(int i, double k)
   return  f;
 }
 
-Vector BendingNeedleModel::calcFPrev(int i, double k)
+Vector BendingNeedleModel::calcFPrev(int i, double k) const
 {
-  std::vector<Vector>& x = nodes;
+  const std::vector<Vector>& x = nodes;
   Vector f = Vector(
     needle_Fx_next(x[i],x[i-1],x[i-2], k, segmentLength),
     needle_Fy_next(x[i],x[i-1],x[i-2], k, segmentLength),
@@ -112,7 +112,7 @@ Vector BendingNeedleModel::calcFPrev(int i, double k)
   return  f;
 }
 
-Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k)
+Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k) const
 {
   Vector f = Vector(
     spring_FSx(a,b,k),
@@ -632,6 +632,27 @@ void BendingNeedleModel::setGravity( const Vector& g )
 {
   G = g;
 }
+
+Vector BendingNeedleModel::getBaseTorque() const
+{
+  if( springs.find(0) != springs.end() && springs.find(1) != springs.end() )
+  {
+    Vector lever = springs.at(0).x - springs.at(1).x;
+    Vector force = calcSpring(nodes.at(0), springs.at(0).x, springs.at(0).k);
+    Vector torque = cml::cross(lever, force);
+    Vector force2 = calcSpring(nodes.at(1), springs.at(1).x, springs.at(1).k);
+    torque += cml::cross(-lever, force2);
+    return torque;
+  }
+  return Vector( 0, 0 ,0 );
+}
+
+Vector BendingNeedleModel::getBaseForce() const
+{
+  return calcFNext(0,kNeedle) + calcF(1,kNeedle);
+}
+
+
 
 double BendingNeedleModel::getTotalLength()
 {

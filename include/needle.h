@@ -91,10 +91,10 @@ private:
 
   cml::vectord m; // accelerations from last step
 
-  Vector calcF(int i, double k);
-  Vector calcFNext(int i, double k);
-  Vector calcFPrev(int i, double k);
-  Vector calcSpring(Vector a, Vector b, double k);
+  Vector calcF(int i, double k) const;
+  Vector calcFNext(int i, double k) const;
+  Vector calcFPrev(int i, double k) const;
+  Vector calcSpring(Vector a, Vector b, double k) const;
 
   /**
    * use the conjugate gradient method to solve a system of
@@ -165,6 +165,9 @@ public:
   void setBaseDirection( const Vector& dir );
 
   void setGravity( const Vector& g );
+
+  Vector getBaseTorque() const;
+  Vector getBaseForce() const;
 
   double getTotalLength();
 
