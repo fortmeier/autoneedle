@@ -52,9 +52,19 @@ public:
  * A bendable needle.
  * Can compute deformations and uses concepts from [1-4].
  *
- * There are two different modes available. The first is a dynamic mode, which uses
- * the integration scheme of [1], including inertia.
- * The second one is a quasi-static mode as used in [2]. ATM, this is not implemented.
+ * A needle is a set of n connected nodes with a base and a tip:
+ *
+ * (0)-----(1)-----(2)-----(3)-----(4)- . . . -(n-1)
+ *
+ * The 0-th node is called the base node, which usually is connected
+ * to a handle.
+ * The (n-1)-th node is called the needle tip node and is interacting
+ * with tissue.
+ *
+ * There are two different modes for the computation of deformations
+ * available. The first is a dynamic mode, which uses
+ * the Newton-Raphson integration scheme of [1], including inertia.
+ * The second one is a quasi-static mode as used in [2].
  * Both methods need the computation of a Jacobian. Here, this is supported by
  * automatic differentiation of the energy terms. See \see GenerateCode.py.
  *
@@ -112,10 +122,22 @@ private:
   double totaltime;
   double dt;
 
+  /**
+   * indicates if the needle should output large
+   * amounts of debugging information
+   * This should only be enabled by developers for debugging
+   * purposes.
+   */
   bool debugOut;
 
+  /**
+   * needle Stiffness
+   */
   double kNeedle;
 
+  /**
+   * distance between two nodes
+   */
   double segmentLength;
 
   /**
@@ -154,23 +176,74 @@ public:
    */
   double simulateImplicitStatic( double dt );
 
+  /**
+   * Adds a lagrange modifier to the node with index nodeIndex
+   * N is the direction in which the movement of the node is
+   * restricted. To restrict the movement along a line, use
+   * two Lagrange-Modifiers perpendicular to the line.
+   * One Lagrange-Modifier restricts the movement to the plane
+   * perpendicular to the normal N. Three linearly independent
+   * Modifiers fix a point completely at a position.
+   * Currently, this is not supported.
+   */
   void addLagrangeModifier( int nodeIndex, Vector N );
 
+  /**
+   * connects the node with index nodeIndex to a position pos
+   * k is the spring stiffness constant
+   */ 
   void setSpring( int nodeIndex, Vector pos, double k );
 
+  /**
+   * return a vector of the positions of the nodes of the
+   * needle
+   */
   const std::vector<Vector>& getX() const;
+  
+  /**
+   * return the length of a single segment, that is is
+   * distance between two adjacent nodes of the undeformed
+   * needle
+   */
   double getSegmentLength( ) const;
 
+  /**
+   * set the position of the base node of the needle
+   */
   void setBasePosition( const Vector& pos );
+
+  /**
+   * set the direction of the needle at the base
+   */ 
   void setBaseDirection( const Vector& dir );
 
+  /**
+   * set the force vector that acts on all nodes of the needle.
+   * Per default, this is (0, -9.81m/s^2, 0)
+   */
   void setGravity( const Vector& g );
 
+  /**
+   * get the torque that is acting on the base of a needle node
+   */
   Vector getBaseTorque() const;
+
+  /**
+   * calculate the force that is acting on the base node of the
+   * needle
+   */
   Vector getBaseForce() const;
 
+  /**
+   * calculate the total length of all segments of the needle
+   */
   double getTotalLength();
 
+  /**
+   * reset the needle to an undeformed configuration
+   * with position and orientation as defined by
+   * basePosition and baseDirection
+   */
   void reset();
 
 
