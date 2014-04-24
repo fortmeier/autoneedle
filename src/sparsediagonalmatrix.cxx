@@ -130,37 +130,6 @@ cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
   return r;
 }
 
-void testMatrix() {
-  SparseDiagonalMatrix A( 10, 5 );
-  A(0,0) = 1;
-  A(1,1) = 2;
-  A(0,2) = 3;
-  A(3,3) = 4;
-  A(4,4) = 5;
-  A(5,5) = 6;
-  A(6,6) = 7;
-  A(9,7) = 8;
-  A(8,8) = 9;
-  A(9,9) = 3;
-
-  cml::vectord r(10);
-  r[0] = 11;
-  r[1] = 22;
-  r[2] = 33;
-  r[3] = 44;
-  r[4] = 55;
-  r[5] = 66;
-  r[6] = 77;
-  r[7] = 88;
-  r[8] = 99;
-  r[9] = 11;
-  std::cout<<A<<std::endl;
-  std::cout<<r<<std::endl;
-  std::cout<<A*r<<std::endl;
-  exit(0);
-
-}
-
 int SparseDiagonalMatrix::getSize()
 {
   return size;
