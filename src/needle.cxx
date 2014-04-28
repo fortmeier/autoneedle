@@ -54,6 +54,7 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   totaltime( 0 ),
   debugOut( false ),
   kNeedle(k),
+  kBase(2000),
   segmentLength(length/(double)(numNodes-1)),
   baseDirection(1,0,0),
   basePosition(0,0,0),
@@ -609,8 +610,8 @@ void BendingNeedleModel::setBasePosition( const Vector& pos )
   //x[4] = secondPosition[1];
   //x[5] = secondPosition[2];
 
-  setSpring(0, basePosition, 2000 );
-  setSpring(1, secondPosition, 2000 );
+  setSpring(0, basePosition, kBase );
+  setSpring(1, secondPosition, kBase );
 
 }
 
@@ -623,7 +624,7 @@ void BendingNeedleModel::setBaseDirection( const Vector& dir )
   //x[3] = secondPosition[0];
   //x[4] = secondPosition[1];
   //x[5] = secondPosition[2];
-  setSpring(1, secondPosition, 200 );
+  setSpring(1, secondPosition, kBase );
   //A.getLagrangeModifiers()[0] = baseDirection;
   //A.getLagrangeModifiers()[1] = baseDirection;
 }
