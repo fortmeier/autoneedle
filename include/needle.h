@@ -135,6 +135,8 @@ private:
    */
   double kNeedle;
 
+  double kBase;
+
   /**
    * distance between two nodes
    */
