@@ -22,7 +22,10 @@
  */
 
 #include <iomanip>
-#include <exception> 
+#include <exception>
+
+#include <emmintrin.h>
+#include <pmmintrin.h>
 
 #include "sparsediagonalmatrix.h"
 
@@ -168,17 +171,52 @@ void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r 
   }
 
   // do the middle part fully optimized
-  for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j++ )
+  for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j+=2 )
   {
     r[j] = 0;
+
+    //if((j-bandwidth_2) % 2 == 1)
     for( int i = 0; i < bandwidth; i+=4 )
     {
-      r[j] += _at(i+0,j) * x[i+0+j-bandwidth_2];
-      r[j] += _at(i+1,j) * x[i+1+j-bandwidth_2];
-      r[j] += _at(i+2,j) * x[i+2+j-bandwidth_2];
-      r[j] += _at(i+3,j) * x[i+3+j-bandwidth_2];
+      //r[j] += _at(i,j) * x[i+j-bandwidth_2];
+       r[j] += _at(i+0,j) * x[i+0+j-bandwidth_2];
+       r[j] += _at(i+1,j) * x[i+1+j-bandwidth_2];
+       r[j] += _at(i+2,j) * x[i+2+j-bandwidth_2];
+       r[j] += _at(i+3,j) * x[i+3+j-bandwidth_2];
     }
+    //else
+    for( int i = 0; i < bandwidth; i+=4 )
+    {
+      int j2 = j+1;
+      //std::cout<< " try " << i << " xoffset "<< (i+0+j-bandwidth_2) <<" check "<< (j-bandwidth_2) % 2 << std::endl;
+      __m128d matrixPart1 = _mm_load_pd( &_at(i+0,j2) );
+      __m128d vectorPart1 = _mm_load_pd( &x[i+0+j2-bandwidth_2] );
+      //std::cout << "---" << std::endl;
 
+      __m128d prod1 = _mm_mul_pd( matrixPart1, vectorPart1 );
+
+      //std::cout<< " try " << i << " + 2" << std::endl;
+      __m128d matrixPart2 = _mm_load_pd( &_at(i+2,j2) );
+      __m128d vectorPart2 = _mm_load_pd( &x[i+2+j2-bandwidth_2] );
+
+
+      __m128d prod2 = _mm_mul_pd( matrixPart2, vectorPart2 );
+
+      __m128d sum = _mm_add_pd( prod1, prod2 );
+
+      __m128d red1 = _mm_hadd_pd( sum, sum );
+
+      //__m128d red2 = _mm_hadd_pd( red1, red1 );
+
+      double res;
+      _mm_store_sd( &res, red1 );
+
+      r[j2] += res;
+      // r[j] += _at(i+0,j) * x[i+0+j-bandwidth_2];
+      // r[j] += _at(i+1,j) * x[i+1+j-bandwidth_2];
+      // r[j] += _at(i+2,j) * x[i+2+j-bandwidth_2];
+      // r[j] += _at(i+3,j) * x[i+3+j-bandwidth_2];
+    }
   }
 
   // do the end part non-optimized as well
