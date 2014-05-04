@@ -48,10 +48,14 @@ ADD_EXECUTABLE( autoneedle src/main.cxx src/Rendering.cxx)
 TARGET_LINK_LIBRARIES(autoneedle ${VTK_LIBRARIES})
 TARGET_LINK_LIBRARIES(autoneedle needlelib)
 
-ADD_EXECUTABLE( tests tests/testing.cxx tests/testingDiagonalSparseMatrix.cxx )
+ADD_EXECUTABLE( tests tests/testing.cxx )
 TARGET_LINK_LIBRARIES( tests ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY} pthread needlelib )
+
+ADD_EXECUTABLE( testsMatrix tests/testingDiagonalSparseMatrix.cxx )
+TARGET_LINK_LIBRARIES( testsMatrix ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY} pthread needlelib )
 
 
 ENABLE_TESTING()
 
-ADD_TEST( testAll tests )
+ADD_TEST( testNeedle tests )
+ADD_TEST( testMatrix testsMatrix )

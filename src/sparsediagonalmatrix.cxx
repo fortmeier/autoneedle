@@ -141,3 +141,55 @@ int SparseDiagonalMatrix::getBandwidth()
   return bandwidth;
 }
 
+void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r )
+{
+  // first, check if size of matrix and vectors are right:
+  if( size != x.size() )
+    throw std::runtime_error("size of x must be the same as matrix size");
+
+  if( size != r.size() )
+    throw std::runtime_error("size of r must be the same as matrix size");
+
+
+  if (this->bandwidth % 4 != 0 ) 
+    throw std::runtime_error("fast multiplication only works with matrix with bandwidth is multiple of 4");
+
+  // now, do the multiplication
+
+  // do the start non-optimized
+  for(int j = 0; j < bandwidth_2+1; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i++ )
+    {
+      r[j] += (*this)(i,j) * x[i];
+    }
+
+  }
+
+  // do the middle part fully optimized
+  for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i+=4 )
+    {
+      r[j] += _at(i+0,j) * x[i+0+j-bandwidth_2];
+      r[j] += _at(i+1,j) * x[i+1+j-bandwidth_2];
+      r[j] += _at(i+2,j) * x[i+2+j-bandwidth_2];
+      r[j] += _at(i+3,j) * x[i+3+j-bandwidth_2];
+    }
+
+  }
+
+  // do the end part non-optimized as well
+  for(int j = size - bandwidth_2-1; j < size; j++ )
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth; i++ )
+    {
+      r[j] += _at(i,j) * x[i+size-bandwidth];
+    }
+
+  }
+
+}

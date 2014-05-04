@@ -89,4 +89,9 @@ public:
   int getSize();
   int getBandwidth();
 
+  /**
+   * fast multiplication using intrincisc
+   */
+  void multiplyWith( const cml::vectord& x, cml::vectord& r );
+
 };
