@@ -24,5 +24,8 @@
 #pragma once
 #include "cml/cml.h"
 
+typedef double Real;
 typedef cml::vector3d Vector;
+typedef cml::vectord VectorDyn;
+
 typedef cml::matrixd_r Matrix;

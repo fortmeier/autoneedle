@@ -43,20 +43,20 @@ def sympyToC( symname, symfunc, vectors=[], scalars=[]):
 
 	varstring = ""
 	if vectors == None:
-		varstring=",".join( " double "+x for x in symbolslist )
+		varstring=",".join( " Real "+x for x in symbolslist )
 	else :
 		varstring=",".join( " const Vector& "+s for s in vectors )
 	
         if scalars != []:
-		varstring+=","+",".join( " const double& "+s for s in scalars )
+		varstring+=","+",".join( " const Real& "+s for s in scalars )
 
 
-	c_code += "double "+str(symname)+"("+varstring+" )\n"
+	c_code += "Real "+str(symname)+"("+varstring+" )\n"
 	c_code +=  "{\n"
 	for s in symbols:
 		#print s
-		c_code +=  "  double " +ccode(s[0]) + " = " + ccode(s[1]) + ";\n"
-	c_code +=  "  double r = " + ccode(simple[0])+";\n"
+		c_code +=  "  Real " +ccode(s[0]) + " = " + ccode(s[1]) + ";\n"
+	c_code +=  "  Real r = " + ccode(simple[0])+";\n"
 	c_code +=  "  return r;\n"
 	c_code += "}\n\n"
 	return c_code
@@ -76,12 +76,12 @@ def sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, matrixname ):
 	callstring=",".join( " "+s for s in vectors )
 
         if scalars != []:
-		varstring+=", "+",".join( " const double& "+s for s in scalars )
+		varstring+=", "+",".join( " const Real& "+s for s in scalars )
 		callstring+=", "+",".join( " "+s for s in scalars )
 
 	varstring = "int oX, int oY, "+matrixname+"& M, " + varstring
 
-	c_code += "double "+str(funcname)+"MatrixAdd("+varstring+" )\n"
+	c_code += "Real "+str(funcname)+"MatrixAdd("+varstring+" )\n"
 	c_code +=  "{\n"
 
         for i in range(0,3):
