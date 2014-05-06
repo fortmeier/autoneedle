@@ -34,8 +34,10 @@ SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int b ) :
   bandwidth(b),
   bandwidth_2(b/2)
 {
-  if( m < bandwidth_2 ) throw std::runtime_error("bandwitdh / 2 greater than matrix size");
-  values = new double[m*bandwidth];
+
+  if( b < 3 || b % 2 != 1 ) throw std::runtime_error("bandwitdh is smaller than 3 or odd");
+
+  values = new double[m*(bandwidth+1)];
   zero();
 
 }
@@ -45,9 +47,19 @@ SparseDiagonalMatrix::~SparseDiagonalMatrix()
 	delete[] values;
 }
 
+int SparseDiagonalMatrix::getOffset( int y ) const
+{
+  int t1 =  (int)floor( bandwidth / 2.0 ) % 2;
+  int t2 =  (int)ceil( bandwidth / 2.0 ) % 2;
+  int a = floor( ( y + t1) / 2.0 ) * 2;
+  int b = ceil( ( bandwidth - t2 ) / 2.0 );
+  return a - b; 
+}
+
+
 void SparseDiagonalMatrix::zero()
 {
-  for( int i = 0; i < bandwidth; i++ )
+  for( int i = 0; i < bandwidth+1; i++ )
   {
     for( int j = 0; j < size; j++ )
     {
@@ -60,23 +72,18 @@ std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix
 {
   for( int j = 0; j < matrix.size; j++ )
   {
-    int remaining = matrix.size;
-    out << "[ ";
-    for( int k = matrix.bandwidth_2; k < j && k < matrix.size - matrix.bandwidth_2-1; k++) 
+    int o = matrix.getOffset(j);
+    out << std::setw( 4 );
+    out << o << "[ ";
+    for( int i = o; i > 0; i-- )
     {
-      out << "   . ";
-      remaining--;
+      out << "   .";
     }
-
-    for( int i = 0; i < matrix.bandwidth; i++ )
+    int s = 0;
+    if( o < 0) s = -o;
+    for( int i = s; i < matrix.bandwidth+1; i++ )
     {
-      out << std::setw( 4 ) << matrix._at(i,j) << " ";
-      remaining--;
-    }
-
-    for( int k = 0; k < remaining; k++ ) 
-    {
-      out << "   . ";
+      out << std::setw( 4 ) << matrix._at(i,j);
     }
 
     out << " ]\n";
@@ -86,49 +93,62 @@ std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix
 
 double& SparseDiagonalMatrix::_at( int i, int j ) const
 {
-  return values[ i + bandwidth*j ];
+  return values[ i + (bandwidth+1)*j ];
 }
 
 double& SparseDiagonalMatrix::operator() ( int i, int j ) const
 {
-  if( j <= bandwidth_2) return _at(i,j);
-  else if( j >= size - bandwidth_2) return _at(i-size+bandwidth,j);
-  return _at(i-j+bandwidth_2,j);
+  return _at(i-getOffset(j),j);
 }
 
 cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
 {
   cml::vectord r(x.size());
-
-  for(int j = 0; j < bandwidth_2+1; j++ )
+  for(int j = 0; j < size; j++)
   {
     r[j] = 0;
-    for( int i = 0; i < bandwidth; i++ )
+    int o = getOffset(j);
+    for( int i = 0; i < bandwidth + 1; i++) 
     {
-      r[j] += (*this)(i,j) * x[i];
+      int X = i + o;
+      if( X >= 0 && X < size )
+      {
+        r[j] += _at(i,j) * x[X];
+        //std::cout<<_at(i,j) * x[X]<<std::endl;
+      }
     }
-
+    //std::cout<<"="<<r[j]<<std::endl;
   }
 
-  for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j++ )
-  {
-    r[j] = 0;
-    for( int i = 0; i < bandwidth; i++ )
-    {
-      r[j] += _at(i,j) * x[i+j-bandwidth_2];
-    }
+  // for(int j = 0; j < bandwidth_2+1; j++ )
+  // {
+  //   r[j] = 0;
+  //   for( int i = 0; i < bandwidth; i++ )
+  //   {
+  //     r[j] += (*this)(i,j) * x[i];
+  //   }
 
-  }
+  // }
 
-  for(int j = size - bandwidth_2-1; j < size; j++ )
-  {
-    r[j] = 0;
-    for( int i = 0; i < bandwidth; i++ )
-    {
-      r[j] += _at(i,j) * x[i+size-bandwidth];
-    }
+  // for(int j = bandwidth_2+1; j < size - bandwidth_2-1; j++ )
+  // {
+  //   r[j] = 0;
+  //   for( int i = 0; i < bandwidth; i++ )
+  //   {
+  //     r[j] += _at(i,j) * x[i+j-bandwidth_2];
+  //   }
 
-  }
+  // }
+
+  // for(int j = size - bandwidth_2-1; j < size; j++ )
+  // {
+  //   r[j] = 0;
+  //   for( int i = 0; i < bandwidth; i++ )
+  //   {
+  //     r[j] += _at(i,j) * x[i+size-bandwidth];
+  //   }
+
+  // }
 
   return r;
 }
@@ -144,7 +164,7 @@ int SparseDiagonalMatrix::getBandwidth()
   return bandwidth;
 }
 
-void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r )
+void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
 {
   // first, check if size of matrix and vectors are right:
   if( size != x.size() )
@@ -156,9 +176,49 @@ void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r 
 
   if (this->bandwidth % 4 != 0 ) 
     throw std::runtime_error("fast multiplication only works with matrix with bandwidth is multiple of 4");
-
+  
   // now, do the multiplication
+  int o = getOffset(0);
+  int k = o;
 
+  for(int j = -o; j < size+o; j++)
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth + 1; i+=4) 
+    {
+      int X = i + k;
+      //r[j] += _at(i,j) * x[X];
+      //std::cout<<_at(i,j) * x[X]<<std::endl;
+            //int j2 = j+1;
+      //std::cout<< " try " << i << " xoffset "<< (i+0+j-bandwidth_2) <<" check "<< (j-bandwidth_2) % 2 << std::endl;
+      __m128d matrixPart1 = _mm_load_pd( &_at(i,j) );
+      __m128d vectorPart1 = _mm_load_pd( &x[X] );
+      //std::cout << "---" << std::endl;
+
+      __m128d prod1 = _mm_mul_pd( matrixPart1, vectorPart1 );
+
+      __m128d matrixPart2 = _mm_load_pd( &_at(i+2,j) );
+      __m128d vectorPart2 = _mm_load_pd( &x[X+2] );
+      //std::cout << "---" << std::endl;
+
+      __m128d prod2 = _mm_mul_pd( matrixPart2, vectorPart2 );
+
+
+      __m128d sum = _mm_add_pd( prod1, prod2 );
+
+      __m128d red1 = _mm_hadd_pd( sum, sum );
+
+      double res;
+      _mm_store_sd( &res, red1 );
+
+      r[j] += res;
+      
+    }
+    if(j%2 == 0) k+=2;
+    //std::cout<<"="<<r[j]<<std::endl;
+  }
+
+/*
   // do the start non-optimized
   for(int j = 0; j < bandwidth_2+1; j++ )
   {
@@ -229,5 +289,5 @@ void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r 
     }
 
   }
-
+*/
 }

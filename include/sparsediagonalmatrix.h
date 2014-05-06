@@ -60,6 +60,8 @@ private:
   int bandwidth_2;
   int offset;
 
+  int getOffset( int y ) const;
+
 
 public:
   SparseDiagonalMatrix( int m, int b );
@@ -92,6 +94,6 @@ public:
   /**
    * fast multiplication using intrincisc
    */
-  void multiplyWith( const cml::vectord& x, cml::vectord& r );
+  void multiplyWith( const cml::vectord& x, cml::vectord& r ) const;
 
 };
