@@ -48,7 +48,13 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
   //std::cout<<"x: "<<x<<std::endl;
 
   // first compute result of sparse diagonal matrix;
+#if 1  
   cml::vectord r = A * x;
+#else
+  // use faster method
+  cml::vectord r(x.size());
+  A.multiplyWith(x, r);
+#endif
   //std::cout<<"r1: "<<r<<std::endl;
   r.resize( numNodes * 3 + numLagrangeModifiers );
   //std::cout<<"r2: "<<r<<std::endl;
