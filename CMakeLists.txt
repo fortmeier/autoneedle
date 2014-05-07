@@ -32,6 +32,7 @@ SET( source
   src/needle.cxx
   src/needlematrix.cxx
   src/sparsediagonalmatrix.cxx
+  src/sparsediagonalmatrixOpt.cxx
 )
 
 INCLUDE_DIRECTORIES(
