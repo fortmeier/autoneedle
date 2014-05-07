@@ -46,6 +46,7 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   dF_dx( numNodes*3, 19 ),
   dF_dv( numNodes*3, 19 ),
   nodes( numNodes ),
+  normals( numNodes ),
   x(numNodes*3), // positions from last step
   v(numNodes*3), // velocities from last step
   ao(numNodes*3), // accelerations from last step
@@ -123,6 +124,15 @@ Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k) const
   return  f;
 }
 
+Vector BendingNeedleModel::calcSpringNoTangential(Vector a, Vector b, Vector n, double k) const
+{
+  Vector f = Vector(
+    springNoTangential_FSx(a,b,n,k),
+    springNoTangential_FSy(a,b,n,k),
+    springNoTangential_FSz(a,b,n,k)
+  );
+  return  f;
+}
 
 
 
@@ -224,7 +234,10 @@ void BendingNeedleModel::updateJacobianForce()
   for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
   {
     int i = iter->first;
-    spring_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, iter->second.k ); 
+    if( i == 0 )
+      spring_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, iter->second.k );
+    else
+      springNoTangential_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, normals[i] , iter->second.k);
   }
   //dF_dx *= 1.0;
   //dF_dx.transpose();
@@ -340,10 +353,16 @@ void BendingNeedleModel::addForcesToB()
   {
     b[numNodes*3+i]=0;
   }
+
   for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
   {
     int i = iter->first;
-    Vector fSpring = calcSpring(nodes[i], iter->second.x, iter->second.k);
+    Vector fSpring;
+    if( i == 0)
+      fSpring = calcSpring(nodes[i], iter->second.x, iter->second.k);
+    else
+      fSpring = calcSpringNoTangential(nodes[i], iter->second.x, normals[i], iter->second.k);
+
     b[i*3+0] += fSpring[0];
     b[i*3+1] += fSpring[1];
     b[i*3+2] += fSpring[2];
@@ -458,6 +477,11 @@ double BendingNeedleModel::updateStep()
     nodes[i][0] = x[ix];
     nodes[i][1] = x[iy];
     nodes[i][2] = x[iz];
+
+    if( i < numNodes - 1)
+      normals[i] = (nodes[i]-nodes[i-1]).normalize();
+    else
+      normals[i] = normals[i-1];
   }
 
   return error;
@@ -560,6 +584,10 @@ double BendingNeedleModel::simulateImplicitStatic( double _dt )
     Vector xnew( x[ix]+ap[ix], x[iy]+ap[iy], x[iz]+ap[iz] );
     error += (xnew-nodes[i]).length();
     nodes[i] = xnew;
+    if( i < numNodes - 1)
+      normals[i] = (nodes[i]-nodes[i-1]).normalize();
+    else
+      normals[i] = normals[i-1];
   }
   x+=ap;
   if(debugOut) std::cout<<"x: "<<x<<std::endl;
@@ -673,5 +701,9 @@ void BendingNeedleModel::reset()
     x[i*3+0] = nodes[i][0];
     x[i*3+1] = nodes[i][1];
     x[i*3+2] = nodes[i][2];
+    if( i < numNodes - 1)
+      normals[i] = (nodes[i]-nodes[i-1]).normalize();
+    else
+      normals[i] = normals[i-1];
   }
 }

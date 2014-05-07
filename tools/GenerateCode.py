@@ -35,6 +35,8 @@ a = symbols('a[0] a[1] a[2]')
 b = symbols('b[0] b[1] b[2]')
 c = symbols('c[0] c[1] c[2]')
 
+n = symbols('n[0] n[1] n[2]')
+
 k, k1, l0 = symbols('k k1 l0');
 
 u = ReferenceFrame('u')
@@ -42,6 +44,8 @@ u = ReferenceFrame('u')
 u1=(u.x*a[0] + u.y*a[1] + u.z*a[2])
 u2=(u.x*b[0] + u.y*b[1] + u.z*b[2])
 u3=(u.x*c[0] + u.y*c[1] + u.z*c[2])
+
+n1=(u.x*n[0] + u.y*n[1] + u.z*n[2])
 
 m1=(u.y*1)
 m2=(u.z*1)
@@ -84,6 +88,9 @@ Estretch = l1 + l2
 E = Estretch + Ebend
 
 Espring = (s1.magnitude())**2*k
+
+# energy of a spring between a and b, with no force in normal direction n
+EspringNoTangential = ((s1 - n1.dot(s1)*n1).magnitude() )**2*k
 
 code = ""
 
@@ -139,6 +146,15 @@ FSz=-diff(Espring, a[2])
 code += CodeToC.sympyToCMulti( [("FSx", FSx), ("FSy", FSy), ("FSz", FSz)], ["a", "b"], ["k"], prefix = "spring_" )
 
 code += secondDeriv( -Espring, "spring_Jacobian", a, a, ["a", "b"], ["k"], "")
+
+# EspringNoTangential
+FSNx=-diff(EspringNoTangential, a[0])
+FSNy=-diff(EspringNoTangential, a[1])
+FSNz=-diff(EspringNoTangential, a[2])
+
+code += CodeToC.sympyToCMulti( [("FSx", FSNx), ("FSy", FSNy), ("FSz", FSNz)], ["a", "b", "n"], ["k"], prefix = "springNoTangential_" )
+
+code += secondDeriv( -EspringNoTangential, "springNoTangential_Jacobian", a, a, ["a", "b", "n"], ["k"], "")
 
 f = open('gen_src/generatedCode.h', 'w')
 f.write("#pragma once\n\n")
