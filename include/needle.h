@@ -90,6 +90,7 @@ private:
   SparseDiagonalMatrix dF_dv;
 
   std::vector<Vector> nodes;
+  std::vector<Vector> normals;
 
   typedef std::map<int, Spring> SpringMap;
   SpringMap springs;
@@ -105,6 +106,7 @@ private:
   Vector calcFNext(int i, double k) const;
   Vector calcFPrev(int i, double k) const;
   Vector calcSpring(Vector a, Vector b, double k) const;
+  Vector calcSpringNoTangential(Vector a, Vector b, Vector n, double k) const;
 
   /**
    * use the conjugate gradient method to solve a system of
