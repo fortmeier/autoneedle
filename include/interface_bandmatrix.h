@@ -52,7 +52,7 @@ public:
   virtual int getSize() = 0;
   virtual int getBandwidth() = 0;
 
-  /**
+    /**
    * fast multiplication using intrincisc
    */
   virtual void multiplyWith( const cml::vectord& x, cml::vectord& r ) const = 0;

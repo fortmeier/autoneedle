@@ -27,6 +27,8 @@
 
 #include "mathheader.h"
 
+#include "interface_bandmatrix.h"
+
 /*
  * A sparse diagonal matrix only has entries close to the diagonal of the matrix:
  * | * * 0 0 0 |
@@ -51,7 +53,7 @@
  * | 0 0 * * * |
  */
 
-class SparseDiagonalMatrix
+class SparseDiagonalMatrix : public BandMatrixInterface
 {
 private:
   double* values;
@@ -59,8 +61,6 @@ private:
   int bandwidth;
   int bandwidth_2;
   int offset;
-
-  int getOffset( int y ) const;
 
 
 public:
@@ -91,7 +91,7 @@ public:
   int getSize();
   int getBandwidth();
 
-  /**
+    /**
    * fast multiplication using intrincisc
    */
   void multiplyWith( const cml::vectord& x, cml::vectord& r ) const;

@@ -174,7 +174,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
     throw std::runtime_error("size of r must be the same as matrix size");
 
 
-  if (this->bandwidth % 4 != 0 ) 
+  if ((this->bandwidth+1) % 4 != 0 ) 
     throw std::runtime_error("fast multiplication only works with matrix with bandwidth is multiple of 4");
   
   // now, do the multiplication
