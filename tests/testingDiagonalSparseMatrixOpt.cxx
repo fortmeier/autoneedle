@@ -301,7 +301,7 @@ TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality)
 TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality2)
 {
   int size = 150;
-  SparseDiagonalMatrixOpt m(size,17);
+  SparseDiagonalMatrixOpt m(size,15);
 
   cml::vectord x(size);
 

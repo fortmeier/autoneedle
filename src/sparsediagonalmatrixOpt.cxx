@@ -173,17 +173,49 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
   if( size != r.size() )
     throw std::runtime_error("size of r must be the same as matrix size");
 
+  if( size%2 != 0 )
+    throw std::runtime_error("size of matrix must be multiple of 2");
+
 
   if ((this->bandwidth+1) % 4 != 0 ) 
-    throw std::runtime_error("fast multiplication only works with matrix with bandwidth is multiple of 4");
+    throw std::runtime_error("fast multiplication only works with matrix with bandwidth+1 is multiple of 4");
   
   // now, do the multiplication
-  int o = getOffset(0);
+  const int o = getOffset(0);
   int k = o;
 
-  for(int j = -o; j < size+o; j++)
+  int mox = 0;
+
+  // first rows
+  for(int j = 0; j < -o; j++)
   {
     r[j] = 0;
+    for( int i = -k ; i < bandwidth + 1; i+=4) 
+    {
+      int X = i + k;
+      __m128d matrixPart1 = _mm_load_pd( &_at(i,j) );
+      __m128d vectorPart1 = _mm_load_pd( &x[X] );
+      __m128d prod1 = _mm_mul_pd( matrixPart1, vectorPart1 );
+      __m128d matrixPart2 = _mm_load_pd( &_at(i+2,j) );
+      __m128d vectorPart2 = _mm_load_pd( &x[X+2] );
+      __m128d prod2 = _mm_mul_pd( matrixPart2, vectorPart2 );
+      __m128d sum = _mm_add_pd( prod1, prod2 );
+      __m128d red1 = _mm_hadd_pd( sum, sum );
+
+      double res;
+      _mm_store_sd( &res, red1 );
+
+      r[j] += res;
+      
+    }
+    if(j%2 == mox) k+=2;
+  }
+
+  // middle part
+  for(int j = -o; j < size+o; j+=2)
+  {
+    r[j] = 0;
+    r[j+1] = 0;
     for( int i = 0; i < bandwidth + 1; i+=4) 
     {
       int X = i + k;
@@ -191,6 +223,8 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
       //std::cout<<_at(i,j) * x[X]<<std::endl;
             //int j2 = j+1;
       //std::cout<< " try " << i << " xoffset "<< (i+0+j-bandwidth_2) <<" check "<< (j-bandwidth_2) % 2 << std::endl;
+      
+      // first row
       __m128d matrixPart1 = _mm_load_pd( &_at(i,j) );
       __m128d vectorPart1 = _mm_load_pd( &x[X] );
       //std::cout << "---" << std::endl;
@@ -212,10 +246,48 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
+
+      // second row
+      matrixPart1 = _mm_load_pd( &_at(i,j+1) );
+      prod1 = _mm_mul_pd( matrixPart1, vectorPart1 );
+      matrixPart2 = _mm_load_pd( &_at(i+2,j+1) );
+      prod2 = _mm_mul_pd( matrixPart2, vectorPart2 );
+      sum = _mm_add_pd( prod1, prod2 );
+      red1 = _mm_hadd_pd( sum, sum );
+      _mm_store_sd( &res, red1 );
+
+      r[j+1] += res;
       
     }
-    if(j%2 == 0) k+=2;
+    if(j%2 == mox) k+=2;
     //std::cout<<"="<<r[j]<<std::endl;
+  }
+
+
+  // end rows
+  for(int j = size+o; j < size; j++)
+  {
+    r[j] = 0;
+    for( int i = 0 ; i < size-k; i+=4) 
+    {
+      int X = i + k;
+      __m128d matrixPart1 = _mm_load_pd( &_at(i,j) );
+      __m128d vectorPart1 = _mm_load_pd( &x[X] );
+      __m128d prod1 = _mm_mul_pd( matrixPart1, vectorPart1 );
+      __m128d matrixPart2 = _mm_load_pd( &_at(i+2,j) );
+      __m128d vectorPart2 = _mm_load_pd( &x[X+2] );
+      __m128d prod2 = _mm_mul_pd( matrixPart2, vectorPart2 );
+      __m128d sum = _mm_add_pd( prod1, prod2 );
+      __m128d red1 = _mm_hadd_pd( sum, sum );
+
+      double res;
+      _mm_store_sd( &res, red1 );
+      //std::cout<<"res  "<<i<<":  "<<res<<std::endl;
+
+      r[j] += res;
+      
+    }
+    if(j%2 == mox) k+=2;
   }
 
 /*
