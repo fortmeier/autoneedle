@@ -53,21 +53,21 @@ void SparseDiagonalMatrix::zero()
   }
 }
 
-std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix )
+std::ostream& SparseDiagonalMatrix::print ( std::ostream &out ) const
 {
-  for( int j = 0; j < matrix.size; j++ )
+  for( int j = 0; j < size; j++ )
   {
-    int remaining = matrix.size;
+    int remaining = size;
     out << "[ ";
-    for( int k = matrix.bandwidth_2; k < j && k < matrix.size - matrix.bandwidth_2-1; k++) 
+    for( int k = bandwidth_2; k < j && k < size - bandwidth_2-1; k++) 
     {
       out << "   . ";
       remaining--;
     }
 
-    for( int i = 0; i < matrix.bandwidth; i++ )
+    for( int i = 0; i < bandwidth; i++ )
     {
-      out << std::setw( 4 ) << matrix._at(i,j) << " ";
+      out << std::setw( 4 ) << _at(i,j) << " ";
       remaining--;
     }
 
@@ -144,4 +144,9 @@ int SparseDiagonalMatrix::getBandwidth()
 void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
 {
   r = *this * x;
+}
+
+std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface &matrix )
+{
+  return matrix.print(out);
 }

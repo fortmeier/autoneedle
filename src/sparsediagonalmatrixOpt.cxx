@@ -68,11 +68,11 @@ void SparseDiagonalMatrixOpt::zero()
   }
 }
 
-std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrixOpt &matrix )
+std::ostream& SparseDiagonalMatrixOpt::print ( std::ostream &out ) const
 {
-  for( int j = 0; j < matrix.size; j++ )
+  for( int j = 0; j < size; j++ )
   {
-    int o = matrix.getOffset(j);
+    int o = getOffset(j);
     out << std::setw( 4 );
     out << o << "[ ";
     for( int i = o; i > 0; i-- )
@@ -81,9 +81,9 @@ std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrixOpt &mat
     }
     int s = 0;
     if( o < 0) s = -o;
-    for( int i = s; i < matrix.bandwidth+1; i++ )
+    for( int i = s; i < bandwidth+1; i++ )
     {
-      out << std::setw( 4 ) << matrix._at(i,j);
+      out << std::setw( 4 ) << _at(i,j);
     }
 
     out << " ]\n";

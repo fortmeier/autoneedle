@@ -86,7 +86,7 @@ public:
 
   cml::vectord operator* (const cml::vectord& x) const;
 
-  friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix );
+  //friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix );
 
   int getSize();
   int getBandwidth();
@@ -95,5 +95,8 @@ public:
    * fast multiplication using intrincisc
    */
   void multiplyWith( const cml::vectord& x, cml::vectord& r ) const;
+
+  virtual std::ostream& print ( std::ostream &out ) const;
+
 
 };

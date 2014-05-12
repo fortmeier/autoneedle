@@ -45,7 +45,7 @@ public:
    * this is slightly different from () and should only be called when actually needed
    * or a time costly operation is performed.
    */
-  double& _at(int i, int j) const;
+  virtual double& _at(int i, int j) const = 0;
 
   virtual cml::vectord operator* (const cml::vectord& x) const = 0;
 
@@ -57,4 +57,9 @@ public:
    */
   virtual void multiplyWith( const cml::vectord& x, cml::vectord& r ) const = 0;
 
+  virtual std::ostream& print ( std::ostream &out ) const = 0;
+
+  friend std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface &matrix );
+
 };
+

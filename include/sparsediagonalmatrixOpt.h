@@ -64,7 +64,9 @@ public:
 
   cml::vectord operator* (const cml::vectord& x) const;
 
-  friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrixOpt &matrix );
+  //friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrixOpt &matrix );
+
+  virtual std::ostream& print( std::ostream &out ) const;
 
   int getSize();
   int getBandwidth();
