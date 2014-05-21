@@ -39,6 +39,19 @@ public:
    * access the matrix a position i,j
    */
   virtual double& operator() (int i, int j) const = 0;
+
+  virtual cml::vectord sumRows() const = 0;
+
+  double sum()
+  {
+    cml::vectord s = sumRows();
+    double r = 0;
+    for( int i = 0; i < getSize(); i++ )
+    {
+      r += s[i];
+    }
+    return r;
+  }
   
   /**
    * access the b x m matrix at position i,j
@@ -49,8 +62,8 @@ public:
 
   virtual cml::vectord operator* (const cml::vectord& x) const = 0;
 
-  virtual int getSize() = 0;
-  virtual int getBandwidth() = 0;
+  virtual int getSize() const = 0;
+  virtual int getBandwidth() const = 0;
 
     /**
    * fast multiplication using intrincisc

@@ -27,8 +27,32 @@ TEST(SparseDiagonalMatrixOptTest, Test15)
   cout<<x<<endl;
   cml::vectord b=m*x;
   cout<<b<<endl;
-  //cout<<sum(b)<<endl;
+  cout<<sum(b)<<endl;
   ASSERT_EQ(sum(b), 596);
+}
+
+TEST(SparseDiagonalMatrixOptTest, Test15b)
+{
+  SparseDiagonalMatrixOpt m(31,15);
+
+  cml::vectord x(31);
+
+  int j = 0;
+  
+  for(int i = 0; i < 31; i++) 
+  {
+    x[i] = 1; 
+    m(i,i) = i;
+    if(i>6) m(i-7,i) = i;
+    if(i<30-7) m(i+7,i) = -i;
+  }
+
+  cout<<m<<endl;
+  cout<<x<<endl;
+  cml::vectord b=m*x;
+  cout<<b<<endl;
+  cout<<sum(b)<<endl;
+  ASSERT_EQ(sum(b), 656);
 }
 
 TEST(SparseDiagonalMatrixOptTest, Test17)
@@ -53,6 +77,30 @@ TEST(SparseDiagonalMatrixOptTest, Test17)
   cout<<b<<endl;
   //cout<<sum(b)<<endl;
   ASSERT_EQ(sum(b), 596);
+}
+
+TEST(SparseDiagonalMatrixOptTest, Test17b)
+{
+  SparseDiagonalMatrixOpt m(29,17);
+
+  cml::vectord x(29);
+
+  int j = 0;
+  
+  for(int i = 0; i < 29; i++) 
+  {
+    x[i] = 1; 
+    m(i,i) = i;
+    if(i>6) m(i-7,i) = i;
+    if(i<29-7) m(i+7,i) = -i;
+  }
+
+  cout<<m<<endl;
+  cout<<x<<endl;
+  cml::vectord b=m*x;
+  cout<<b<<endl;
+  cout<<sum(b)<<endl;
+  ASSERT_EQ(sum(b), 560);
 }
 
 // TEST(SparseDiagonalMatrixOptTest, Test19)
@@ -235,46 +283,6 @@ TEST(SparseDiagonalMatrixOptTest, Test17)
 //   //cout<<b<<endl;
 // }
 
-
-
-void speedTest( int size, int reps, int mode )
-{
-  SparseDiagonalMatrixOpt m(size,19);
-
-  cml::vectord x(size);
-
-  for(int i = 0; i < size; i++) 
-  {
-    x[i] = 1; 
-    m(i,i) = i;
-  }
-  
-  cml::vectord r(size);
-
-  for(int i = 0; i < reps; i++)
-  {
-    switch(mode)
-    {
-      case 0:
-        r = m * x;
-        break;
-      case 1:
-        m.multiplyWith( x, r );
-        break;
-    }
-  }
-}
-
-TEST(SparseDiagonalMatrixOptTest, SpeedTest1)
-{
-  speedTest( 150, 100000, 0);
-}
-
-TEST(SparseDiagonalMatrixOptTest, SpeedTest2)
-{
-  speedTest( 150, 100000, 1);
-}
-
 TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality)
 {
   int size = 150;
@@ -319,6 +327,96 @@ TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality2)
   m.multiplyWith( x, r2 );
 
   ASSERT_EQ(r1, r2);
+}
+
+TEST(Bandmatrices, TestSumEquality1)
+{
+  int size = 30;
+  SparseDiagonalMatrixOpt m1(size,15);
+  SparseDiagonalMatrix m2(size,15);
+
+  for(int i = 0; i < size; i++) 
+  {
+    m1(i,i) = i;
+    m2(i,i) = i;
+  }
+  ASSERT_EQ(m1.sum(), m2.sum());
+
+}
+
+
+void subMatrixAdd3x3( BandMatrixInterface& m, int i, int j, int s = 0 )
+{
+  for(int x = 0; x < 3; x++ )
+  {
+    for( int y = 0; y < 3; y++ )
+    {
+      m(i+x,j+y) = ++s;
+    }
+  }
+}
+
+void setMatrix( BandMatrixInterface& m, int n )
+{
+  for(int i = 0; i < n; i++)
+  {
+    // pF_pxi
+    if(i>=2) subMatrixAdd3x3(m, i*3, i*3 ); 
+    if(i>=1 && i < n-1) subMatrixAdd3x3(m, i*3, i*3);
+    if(i>=0 && i< n-2) subMatrixAdd3x3(m, i*3, i*3);
+
+    // pF_pxi+1
+    if(i>=1 && i < n-1) subMatrixAdd3x3(m, i*3, i*3+3);
+    if(i>=0 && i < n-2) subMatrixAdd3x3(m, i*3, i*3+3);
+
+    // pF_pxi+2
+    if(i>=0 && i < n-2) subMatrixAdd3x3(m, i*3, i*3+6);
+
+    // pF_pxi-1
+    if(i>=1 && i < n-1) subMatrixAdd3x3(m, i*3, i*3-3);
+    if(i>=2 && i < n) subMatrixAdd3x3(m, i*3, i*3-3);
+
+    // pF_pxi+2
+    if(i>=2 && i < n) subMatrixAdd3x3(m, i*3, i*3-6);
+  }
+}
+
+TEST(Bandmatrices, TestSumEquality2)
+{
+  int size = 30;
+  SparseDiagonalMatrixOpt m1(size,19);
+  SparseDiagonalMatrix m2(size,19);
+
+  setMatrix( m1, size/3 );
+  setMatrix( m2, size/3 );
+  cout << m1 << endl;
+  cout << m2 << endl;
+
+  ASSERT_EQ(m1.sum(), m2.sum());
+
+
+  cml::vectord x(size);
+
+  for(int i = 0; i < size; i++) 
+  {
+    x[i] = i+1; 
+  }
+
+  cml::vectord b1 = m1 * x;
+  cml::vectord b2 = m2 * x;
+
+  cout << b1 << endl;
+  cout << b2 << endl;
+
+  cml::vectord b3(x.size());
+  cml::vectord b4(x.size());
+  m1.multiplyWith(x, b3);
+  m2.multiplyWith(x, b4);
+
+  cout << b3 << endl;
+  cout << b4 << endl;
+
+  ASSERT_EQ(b3, b4);
 }
 
 // TEST(SparseDiagonalMatrixOptTest, Test3)

@@ -93,6 +93,19 @@ double& SparseDiagonalMatrix::operator() ( int i, int j ) const
   return _at(i-j+bandwidth_2,j);
 }
 
+cml::vectord SparseDiagonalMatrix::sumRows() const
+{
+  cml::vectord r(getSize());
+  for( int j = 0; j < getSize(); j++ )
+  {
+    for( int i = 0; i < bandwidth; i++)
+    {
+      r[i] += _at(i, j);
+    }
+  }
+  return r;
+}
+
 cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
 {
   cml::vectord r(x.size());
@@ -130,13 +143,13 @@ cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
   return r;
 }
 
-int SparseDiagonalMatrix::getSize()
+int SparseDiagonalMatrix::getSize() const
 {
   return size;
 }
 
 
-int SparseDiagonalMatrix::getBandwidth()
+int SparseDiagonalMatrix::getBandwidth() const
 {
   return bandwidth;
 }

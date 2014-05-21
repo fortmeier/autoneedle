@@ -138,14 +138,14 @@ Vector BendingNeedleModel::calcSpringNoTangential(Vector a, Vector b, Vector n, 
 
 void BendingNeedleModel::cg()
 {
-  //std::cout<<"Starting CG"<<std::endl;
+  if(debugOut) std::cout<<"Starting CG"<<std::endl;
   cml::vectord x = ap;
-  //std::cout<<"b:"<<b<<std::endl;
+  if(debugOut) std::cout<<"b:"<<b<<std::endl;
   x.resize(b.size());
 
   cml::vectord r = b - A * x;
 
-  //std::cout<<"r: "<<r<<std::endl;
+  if(debugOut) std::cout<<"r: "<<r<<std::endl;
 
   cml::vectord p = r;
 
@@ -156,8 +156,8 @@ void BendingNeedleModel::cg()
   int i = 0;
   do {
     cml::vectord Ap = A * p;
-    //std::cout<<"1:"<<p<<std::endl;
-    //std::cout<<"2:"<<Ap<<std::endl;
+    if(debugOut) std::cout<<"1:"<<p<<std::endl;
+    if(debugOut) std::cout<<"2:"<<Ap<<std::endl;
     double alpha = rsold/cml::dot(p,Ap);
     x = x + alpha * p;
     r = r-alpha*Ap;

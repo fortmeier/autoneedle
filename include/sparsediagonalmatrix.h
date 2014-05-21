@@ -76,6 +76,8 @@ public:
    * access the matrix a position i,j
    */
   double& operator() (int i, int j) const;
+
+  virtual cml::vectord sumRows() const;
   
   /**
    * access the b x m matrix at position i,j
@@ -88,8 +90,8 @@ public:
 
   //friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix );
 
-  int getSize();
-  int getBandwidth();
+  int getSize() const;
+  int getBandwidth() const;
 
     /**
    * fast multiplication using intrincisc

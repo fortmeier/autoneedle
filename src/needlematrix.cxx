@@ -48,7 +48,7 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
   //std::cout<<"x: "<<x<<std::endl;
 
   // first compute result of sparse diagonal matrix;
-#if 1  
+#if 0  
   cml::vectord r = A * x;
 #else
   // use faster method
@@ -120,7 +120,7 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
   return x;*/
 }
 
-SparseDiagonalMatrix& NeedleMatrix::getSystemMatrix()
+BandMatrixInterface& NeedleMatrix::getSystemMatrix()
 {
   return A;
 }

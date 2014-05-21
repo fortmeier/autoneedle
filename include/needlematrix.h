@@ -26,6 +26,7 @@
 
 #include "mathheader.h"
 #include "sparsediagonalmatrix.h"
+#include "sparsediagonalmatrixOpt.h"
 
 
 /**
@@ -36,11 +37,12 @@ class NeedleMatrix
 {
 public:
   typedef std::map<int, Vector > Modifiers;
+  typedef SparseDiagonalMatrixOpt MatrixType;
 
 private:
   int numNodes;
   //int numLagrangeModifiers;
-  SparseDiagonalMatrix A;
+  MatrixType A;
 
   Modifiers modifiers;
 
@@ -49,7 +51,7 @@ public:
 
   NeedleMatrix( int numNodes );
   cml::vectord operator* (const cml::vectord& x) const;
-  SparseDiagonalMatrix& getSystemMatrix();
+  BandMatrixInterface& getSystemMatrix();
   Modifiers& getLagrangeModifiers();
 
 };

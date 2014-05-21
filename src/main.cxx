@@ -31,8 +31,8 @@
 
 
 //BendingNeedleModel needle( 9.0, 10, 10.0 );
-//BendingNeedleModel needle( 9.0, 10, 10.0 );
-BendingNeedleModel needle( 150.0, 31, 10000.0 );
+BendingNeedleModel needle( 9.0, 10, 10.0 );
+//BendingNeedleModel needle( 150.0, 31, 10000.0 );
 
 
 

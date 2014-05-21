@@ -86,8 +86,8 @@ private:
   NeedleMatrix A;
   NeedleVector b;
 
-  SparseDiagonalMatrix dF_dx;
-  SparseDiagonalMatrix dF_dv;
+  NeedleMatrix::MatrixType dF_dx;
+  NeedleMatrix::MatrixType dF_dv;
 
   std::vector<Vector> nodes;
   std::vector<Vector> normals;

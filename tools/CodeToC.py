@@ -93,7 +93,7 @@ def sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, matrixname ):
 	c_code += "}\n\n"
 	return c_code
 
-def sympyMatrixAdder(funcname, funcMat, vectors, scalars, matrixname=["Matrix", "SparseDiagonalMatrix"]): 
+def sympyMatrixAdder(funcname, funcMat, vectors, scalars, matrixname=["Matrix", "BandMatrixInterface"]): 
 	c_code = ""
 	for m in matrixname:
 		c_code += sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, m ) 
