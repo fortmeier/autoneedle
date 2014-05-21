@@ -383,12 +383,13 @@ void setMatrix( BandMatrixInterface& m, int n )
 
 TEST(Bandmatrices, TestSumEquality2)
 {
-  int size = 30;
+  int nodes = 10;
+  int size = nodes * 3;
   SparseDiagonalMatrixOpt m1(size,19);
   SparseDiagonalMatrix m2(size,19);
 
-  setMatrix( m1, size/3 );
-  setMatrix( m2, size/3 );
+  setMatrix( m1, nodes );
+  setMatrix( m2, nodes );
   cout << m1 << endl;
   cout << m2 << endl;
 
@@ -399,7 +400,7 @@ TEST(Bandmatrices, TestSumEquality2)
 
   for(int i = 0; i < size; i++) 
   {
-    x[i] = i+1; 
+    x[i] = i+1 + 0.33; 
   }
 
   cml::vectord b1 = m1 * x;
@@ -407,6 +408,8 @@ TEST(Bandmatrices, TestSumEquality2)
 
   cout << b1 << endl;
   cout << b2 << endl;
+
+  ASSERT_EQ(b1, b2);
 
   cml::vectord b3(x.size());
   cml::vectord b4(x.size());
@@ -416,7 +419,47 @@ TEST(Bandmatrices, TestSumEquality2)
   cout << b3 << endl;
   cout << b4 << endl;
 
-  ASSERT_EQ(b3, b4);
+  ASSERT_NEAR(sum(b3), sum(b4), 0.00001);
+}
+
+TEST(Bandmatrices, TestSumEquality3)
+{
+  int nodes = 30;
+  int size = nodes * 3;
+  SparseDiagonalMatrixOpt m1(size,19);
+  SparseDiagonalMatrix m2(size,19);
+
+  setMatrix( m1, nodes );
+  setMatrix( m2, nodes );
+  cout << m1 << endl;
+  cout << m2 << endl;
+
+  ASSERT_EQ(m1.sum(), m2.sum());
+
+
+  cml::vectord x(size);
+
+  for(int i = 0; i < size; i++) 
+  {
+    x[i] = i+1 + 0.33; 
+  }
+
+  cml::vectord b1 = m1 * x;
+  cml::vectord b2 = m2 * x;
+
+  cout << b1 << endl;
+  cout << b2 << endl;
+  ASSERT_EQ(b1, b2);
+
+  cml::vectord b3(x.size());
+  cml::vectord b4(x.size());
+  m1.multiplyWith(x, b3);
+  m2.multiplyWith(x, b4);
+
+  cout << b3 << endl;
+  cout << b4 << endl;
+
+  ASSERT_NEAR(sum(b3), sum(b4), 0.00001);
 }
 
 // TEST(SparseDiagonalMatrixOptTest, Test3)
