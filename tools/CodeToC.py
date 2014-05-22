@@ -54,11 +54,12 @@ def sympyToC( symname, symfunc, vectors=[], scalars=[]):
 	c_code += "Real "+str(symname)+"("+varstring+" )\n"
 	c_code +=  "{\n"
 	for s in symbols:
-		#print s
 		c_code +=  "  Real " +ccode(s[0]) + " = " + ccode(s[1]) + ";\n"
 	c_code +=  "  Real r = " + ccode(simple[0])+";\n"
 	c_code +=  "  return r;\n"
 	c_code += "}\n\n"
+
+	c_code = c_code.replace("0L", "0")
 	return c_code
 
 def sympyToCMulti( functions, vectors, scalars, prefix = "" ):
@@ -81,7 +82,7 @@ def sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, matrixname ):
 
 	varstring = "int oX, int oY, "+matrixname+"& M, " + varstring
 
-	c_code += "Real "+str(funcname)+"MatrixAdd("+varstring+" )\n"
+	c_code += "void "+str(funcname)+"MatrixAdd("+varstring+" )\n"
 	c_code +=  "{\n"
 
         for i in range(0,3):

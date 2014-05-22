@@ -584,8 +584,10 @@ double BendingNeedleModel::simulateImplicitStatic( double _dt )
     Vector xnew( x[ix]+ap[ix], x[iy]+ap[iy], x[iz]+ap[iz] );
     error += (xnew-nodes[i]).length();
     nodes[i] = xnew;
-    if( i < numNodes - 1)
+    if( i < numNodes - 1 && i > 0)
       normals[i] = (nodes[i]-nodes[i-1]).normalize();
+    if( i == 0 )
+      normals[i] = normals[i+1];
     else
       normals[i] = normals[i-1];
   }
@@ -666,10 +668,12 @@ Vector BendingNeedleModel::getBaseTorque() const
 {
   if( springs.find(0) != springs.end() && springs.find(1) != springs.end() )
   {
-    Vector lever = springs.at(0).x - springs.at(1).x;
-    Vector force = calcSpring(nodes.at(0), springs.at(0).x, springs.at(0).k);
+    const Spring& first = springs.find(0)->second;
+    const Spring& second = springs.find(1)->second;
+    Vector lever =  first.x - second.x;
+    Vector force = calcSpring(nodes[0], first.x, first.k);
     Vector torque = cml::cross(lever, force);
-    Vector force2 = calcSpring(nodes.at(1), springs.at(1).x, springs.at(1).k);
+    Vector force2 = calcSpring(nodes[1], first.x, first.k);
     torque += cml::cross(-lever, force2);
     return torque;
   }
@@ -701,9 +705,9 @@ void BendingNeedleModel::reset()
     x[i*3+0] = nodes[i][0];
     x[i*3+1] = nodes[i][1];
     x[i*3+2] = nodes[i][2];
-    if( i < numNodes - 1)
-      normals[i] = (nodes[i]-nodes[i-1]).normalize();
-    else
-      normals[i] = normals[i-1];
+
+    springs.clear();
+
+    normals[i] = baseDirection.normalize() * -1.0;
   }
 }
