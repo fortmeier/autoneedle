@@ -4,6 +4,22 @@
 #include "sparsediagonalmatrix.h"
 
 
+TEST(NeedleTest, SimulationComparable)
+{
+  BendingNeedleModel needle( 150.0, 30, 5000.0 );
+  int last = needle.getX().size()-1;
+  double s = needle.getSegmentLength();
+  needle.setSpring( last, Vector( last * s, 10, 0 ), 0.5 );
+  needle.setSpring(0,Vector( 0, 0, 0 ), 0.5);
+
+  double error = 0;
+  for(int i = 0; i < 1000; i++)
+  {
+    error = needle.simulateImplicitStatic(0.001);
+  }
+  ASSERT_NEAR( error, 0, 0.1 );
+}
+
 TEST(NeedleTest, MinimalWorkingExample)
 {
   BendingNeedleModel needle( 150.0, 31, 1000.0 );
@@ -116,3 +132,4 @@ TEST(NeedleTest, AllStatic)
     needle.simulateImplicitStatic(0.001);
   }
 }
+
