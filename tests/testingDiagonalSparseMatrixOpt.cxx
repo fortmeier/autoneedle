@@ -462,6 +462,88 @@ TEST(Bandmatrices, TestSumEquality3)
   ASSERT_NEAR(sum(b3), sum(b4), 0.00001);
 }
 
+
+void subMatrixAdd3x3Rand( BandMatrixInterface& m, int i, int j )
+{
+  for(int x = 0; x < 3; x++ )
+  {
+    for( int y = 0; y < 3; y++ )
+    {
+      m(i+x,j+y) = (double)(rand() % 100000) / 100000.0;
+    }
+  }
+}
+
+void setMatrixRand( BandMatrixInterface& m, int n, int seed )
+{
+  srand(seed);
+  for(int i = 0; i < n; i++)
+  {
+    // pF_pxi
+    if(i>=2) subMatrixAdd3x3Rand(m, i*3, i*3 ); 
+    if(i>=1 && i < n-1) subMatrixAdd3x3Rand(m, i*3, i*3);
+    if(i>=0 && i< n-2) subMatrixAdd3x3Rand(m, i*3, i*3);
+
+    // pF_pxi+1
+    if(i>=1 && i < n-1) subMatrixAdd3x3Rand(m, i*3, i*3+3);
+    if(i>=0 && i < n-2) subMatrixAdd3x3Rand(m, i*3, i*3+3);
+
+    // pF_pxi+2
+    if(i>=0 && i < n-2) subMatrixAdd3x3Rand(m, i*3, i*3+6);
+
+    // pF_pxi-1
+    if(i>=1 && i < n-1) subMatrixAdd3x3Rand(m, i*3, i*3-3);
+    if(i>=2 && i < n) subMatrixAdd3x3Rand(m, i*3, i*3-3);
+
+    // pF_pxi+2
+    if(i>=2 && i < n) subMatrixAdd3x3Rand(m, i*3, i*3-6);
+  }
+}
+
+TEST(Bandmatrices, TestSumEqualityRandom)
+{
+  int nodes = 30;
+  int size = nodes * 3;
+  SparseDiagonalMatrixOpt m1(size,19);
+  SparseDiagonalMatrix m2(size,19);
+
+  cml::vectord x(size);
+
+  for(int i = 0; i < size; i++) 
+  {
+    x[i] = i+1 + 0.33; 
+  }
+
+
+  for(int i = 0; i < 10; i++)
+  {
+    cout << i << endl;
+    setMatrixRand( m1, nodes, i );
+    setMatrixRand( m2, nodes, 1 );
+    ASSERT_EQ(m1.sum(), m2.sum());
+    cml::vectord b1 = m1 * x;
+    cml::vectord b2 = m2 * x;
+
+    //cout << b1 << endl;
+    //cout << b2 << endl;
+    ASSERT_EQ(b1, b2);
+
+    cml::vectord b3(x.size());
+    cml::vectord b4(x.size());
+    m1.multiplyWith(x, b3);
+    m2.multiplyWith(x, b4);
+
+    //cout << b3 << endl;
+    //cout << b4 << endl;
+
+    ASSERT_NEAR(sum(b3), sum(b4), 0.00001);
+
+  }
+
+
+
+}
+
 // TEST(SparseDiagonalMatrixOptTest, Test3)
 // {
 //   SparseDiagonalMatrixOpt m(10,3);
