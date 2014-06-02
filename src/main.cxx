@@ -29,9 +29,10 @@
 
 #define numNodes 10
 
+typedef double Real;
 
 //BendingNeedleModel needle( 9.0, 10, 10.0 );
-BendingNeedleModel needle( 9.0, 10, 10.0 );
+BendingNeedleModel<Real> needle( 9.0, 10, 10.0 );
 //BendingNeedleModel needle( 150.0, 31, 10000.0 );
 
 
@@ -97,7 +98,7 @@ void simulate()
 
   //std::cout<<"needle length: "<<needle.getTotalLength()<<std::endl;
 
-  r->update(needle.getX());
+  r->updateDouble(needle.getX());
   if(ex) exit(0);
  
 }
@@ -122,7 +123,7 @@ int main(int argi, char** argv)
 
   r->setup();
   r->setCallback( simulate );
-  r->update(needle.getX());
+  r->updateDouble(needle.getX());
   r->run();  
   
 

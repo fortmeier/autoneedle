@@ -3,10 +3,13 @@
 #include "needle.h"
 #include "sparsediagonalmatrix.h"
 
+typedef double Real;
+
+typedef BendingNeedleModel<Real> BendingNeedleModelD;
 
 TEST(NeedleTest, SimulationComparable)
 {
-  BendingNeedleModel needle( 150.0, 30, 5000.0 );
+  BendingNeedleModelD needle( 150.0, 30, 5000.0 );
   int last = needle.getX().size()-1;
   double s = needle.getSegmentLength();
   needle.setSpring( last, Vector( last * s, 10, 0 ), 0.5 );
@@ -22,7 +25,7 @@ TEST(NeedleTest, SimulationComparable)
 
 TEST(NeedleTest, MinimalWorkingExample)
 {
-  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 1000.0 );
   for(int i = 0; i < 1000; i++)
   {
     needle.simulateImplicitDynamic(0.001);
@@ -31,7 +34,7 @@ TEST(NeedleTest, MinimalWorkingExample)
 
 TEST(NeedleTest, MinimalWorkingExampleXDynamic)
 {
-  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 1000.0 );
   double error = 0;
   for(int i = 0; i < 1000; i++)
   {
@@ -43,7 +46,7 @@ TEST(NeedleTest, MinimalWorkingExampleXDynamic)
 
 TEST(NeedleTest, MinimalWorkingExampleZDynamic)
 {
-  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 1000.0 );
   needle.setBaseDirection(Vector(0,0,1));
   double error = 0;
   for(int i = 0; i < 1000; i++)
@@ -55,7 +58,7 @@ TEST(NeedleTest, MinimalWorkingExampleZDynamic)
 
 TEST(NeedleTest, MinimalWorkingExampleXStatic)
 {
-  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 1000.0 );
   double error = 0;
   for(int i = 0; i < 1000; i++)
   {
@@ -67,7 +70,7 @@ TEST(NeedleTest, MinimalWorkingExampleXStatic)
 
 TEST(NeedleTest, MinimalWorkingExampleZStatic)
 {
-  BendingNeedleModel needle( 150.0, 31, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 1000.0 );
   needle.setBaseDirection(Vector(0,0,1));
   double error = 0;
   for(int i = 0; i < 1000; i++)
@@ -81,7 +84,7 @@ TEST(NeedleTest, MinimalWorkingExampleZStatic)
 
 TEST(NeedleTest, Stiff)
 {
-  BendingNeedleModel needle( 150.0, 31, 10000.0 );
+  BendingNeedleModelD needle( 150.0, 31, 10000.0 );
   for(int i = 0; i < 1000; i++)
   {
     needle.simulateImplicitDynamic(0.001);
@@ -89,7 +92,7 @@ TEST(NeedleTest, Stiff)
 }
 TEST(NeedleTest, ManyNodesDynamic)
 {
-  BendingNeedleModel needle( 150.0, 51, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 51, 1000.0 );
   for(int i = 0; i < 1000; i++)
   {
     needle.simulateImplicitDynamic(0.001);
@@ -97,7 +100,7 @@ TEST(NeedleTest, ManyNodesDynamic)
 }
 TEST(NeedleTest, AllDynamic)
 {
-  BendingNeedleModel needle( 150.0, 51, 10000.0 );
+  BendingNeedleModelD needle( 150.0, 51, 10000.0 );
   int last = needle.getX().size()-1;
   double s = needle.getSegmentLength();
   needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );
@@ -112,7 +115,7 @@ TEST(NeedleTest, AllDynamic)
 
 TEST(NeedleTest, ManyNodesStatic)
 {
-  BendingNeedleModel needle( 150.0, 51, 1000.0 );
+  BendingNeedleModelD needle( 150.0, 51, 1000.0 );
   for(int i = 0; i < 1000; i++)
   {
     needle.simulateImplicitStatic(0.001);
@@ -120,7 +123,7 @@ TEST(NeedleTest, ManyNodesStatic)
 }
 TEST(NeedleTest, AllStatic)
 {
-  BendingNeedleModel needle( 150.0, 51, 10000.0 );
+  BendingNeedleModelD needle( 150.0, 51, 10000.0 );
   int last = needle.getX().size()-1;
   double s = needle.getSegmentLength();
   needle.setSpring( last, Vector( last * s, 0, 0 ), 0.1 );

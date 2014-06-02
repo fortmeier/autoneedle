@@ -36,7 +36,7 @@ Rendering* Rendering::New() {
 }
 
 
-void Rendering::update( const std::vector<Vector> &x )
+void Rendering::updateDouble( const std::vector<cml::vector3d> &x )
 { 
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> vertices = vtkSmartPointer<vtkCellArray>::New();

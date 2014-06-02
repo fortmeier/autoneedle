@@ -27,6 +27,7 @@
 
 #include "mathheader.h"
 
+template<typename Real>
 class BandMatrixInterface
 {
 public:
@@ -38,14 +39,14 @@ public:
   /**
    * access the matrix a position i,j
    */
-  virtual double& operator() (int i, int j) const = 0;
+  virtual Real& operator() (int i, int j) const = 0;
 
   virtual cml::vectord sumRows() const = 0;
 
-  double sum()
+  Real sum()
   {
     cml::vectord s = sumRows();
-    double r = 0;
+    Real r = 0;
     for( int i = 0; i < getSize(); i++ )
     {
       r += s[i];
@@ -58,7 +59,7 @@ public:
    * this is slightly different from () and should only be called when actually needed
    * or a time costly operation is performed.
    */
-  virtual double& _at(int i, int j) const = 0;
+  virtual Real& _at(int i, int j) const = 0;
 
   virtual cml::vectord operator* (const cml::vectord& x) const = 0;
 
@@ -72,7 +73,10 @@ public:
 
   virtual std::ostream& print ( std::ostream &out ) const = 0;
 
-  friend std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface &matrix );
+  friend std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface &matrix )
+  {
+    return matrix.print(out);
+  }
 
 };
 

@@ -5,6 +5,13 @@
 
 using namespace std;
 
+typedef BendingNeedleModel<double> BendingNeedleModelD;
+typedef SparseDiagonalMatrix<double> SparseDiagonalMatrixD;
+
+typedef SparseDiagonalMatrixOpt<double> SparseDiagonalMatrixDOpt;
+
+typedef double Real;
+
 int sum( cml::vectord b )
 {
   int s = 0;
@@ -15,9 +22,9 @@ int sum( cml::vectord b )
   return s;
 }
 
-TEST(SparseDiagonalMatrixTest, Test15)
+TEST(SparseDiagonalMatrixDTest, Test15)
 {
-  SparseDiagonalMatrix m(30,15);
+  SparseDiagonalMatrixD m(30,15);
 
   cml::vectord x(30);
 
@@ -39,9 +46,9 @@ TEST(SparseDiagonalMatrixTest, Test15)
   ASSERT_EQ(sum(b), 596);
 }
 
-TEST(SparseDiagonalMatrixTest, Test17)
+TEST(SparseDiagonalMatrixDTest, Test17)
 {
-  SparseDiagonalMatrix m(30,17);
+  SparseDiagonalMatrixD m(30,17);
 
   cml::vectord x(30);
 
@@ -63,9 +70,9 @@ TEST(SparseDiagonalMatrixTest, Test17)
   ASSERT_EQ(sum(b), 596);
 }
 
-TEST(SparseDiagonalMatrixTest, Test19)
+TEST(SparseDiagonalMatrixDTest, Test19)
 {
-  SparseDiagonalMatrix m(30,19);
+  SparseDiagonalMatrixD m(30,19);
 
   cml::vectord x(30);
 
@@ -88,9 +95,9 @@ TEST(SparseDiagonalMatrixTest, Test19)
 }
 
 
-TEST(SparseDiagonalMatrixTest, MinimalWorkingExample)
+TEST(SparseDiagonalMatrixDTest, MinimalWorkingExample)
 {
-  SparseDiagonalMatrix m(9,5);
+  SparseDiagonalMatrixD m(9,5);
   m(8,8) = 1;
   cml::vectord x(9);
   for(int i = 0; i < 9; i++) 
@@ -172,9 +179,9 @@ TEST(SparseDiagonalMatrixTest, MinimalWorkingExample)
 
 }
 
-TEST(SparseDiagonalMatrixTest, SecondTest)
+TEST(SparseDiagonalMatrixDTest, SecondTest)
 {
-  SparseDiagonalMatrix m(9,5);
+  SparseDiagonalMatrixD m(9,5);
 
   cml::vectord x(9);
 

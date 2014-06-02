@@ -26,23 +26,26 @@
 
 #include "sparsediagonalmatrix.h"
 
-SparseDiagonalMatrix::SparseDiagonalMatrix( int m, int b ) :
+template<typename Real>
+SparseDiagonalMatrix<Real>::SparseDiagonalMatrix( int m, int b ) :
   size(m),
   bandwidth(b),
   bandwidth_2(b/2)
 {
   if( m < bandwidth_2 ) throw std::runtime_error("bandwitdh / 2 greater than matrix size");
-  values = new double[m*bandwidth];
+  values = new Real[m*bandwidth];
   zero();
 
 }
 
-SparseDiagonalMatrix::~SparseDiagonalMatrix()
+template<typename Real>
+SparseDiagonalMatrix<Real>::~SparseDiagonalMatrix()
 {
 	delete[] values;
 }
 
-void SparseDiagonalMatrix::zero()
+template<typename Real>
+void SparseDiagonalMatrix<Real>::zero()
 {
   for( int i = 0; i < bandwidth; i++ )
   {
@@ -53,7 +56,8 @@ void SparseDiagonalMatrix::zero()
   }
 }
 
-std::ostream& SparseDiagonalMatrix::print ( std::ostream &out ) const
+template<typename Real>
+std::ostream& SparseDiagonalMatrix<Real>::print ( std::ostream &out ) const
 {
   for( int j = 0; j < size; j++ )
   {
@@ -81,19 +85,22 @@ std::ostream& SparseDiagonalMatrix::print ( std::ostream &out ) const
   return out;
 }
 
-double& SparseDiagonalMatrix::_at( int i, int j ) const
+template<typename Real>
+Real& SparseDiagonalMatrix<Real>::_at( int i, int j ) const
 {
   return values[ i + bandwidth*j ];
 }
 
-double& SparseDiagonalMatrix::operator() ( int i, int j ) const
+template<typename Real>
+Real& SparseDiagonalMatrix<Real>::operator() ( int i, int j ) const
 {
   if( j <= bandwidth_2) return _at(i,j);
   else if( j >= size - bandwidth_2) return _at(i-size+bandwidth,j);
   return _at(i-j+bandwidth_2,j);
 }
 
-cml::vectord SparseDiagonalMatrix::sumRows() const
+template<typename Real>
+cml::vectord SparseDiagonalMatrix<Real>::sumRows() const
 {
   cml::vectord r(getSize());
   for( int j = 0; j < getSize(); j++ )
@@ -106,7 +113,8 @@ cml::vectord SparseDiagonalMatrix::sumRows() const
   return r;
 }
 
-cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
+template<typename Real>
+cml::vectord SparseDiagonalMatrix<Real>::operator* (const cml::vectord& x) const
 {
   cml::vectord r(x.size());
 
@@ -143,23 +151,24 @@ cml::vectord SparseDiagonalMatrix::operator* (const cml::vectord& x) const
   return r;
 }
 
-int SparseDiagonalMatrix::getSize() const
+template<typename Real>
+int SparseDiagonalMatrix<Real>::getSize() const
 {
   return size;
 }
 
-
-int SparseDiagonalMatrix::getBandwidth() const
+template<typename Real>
+int SparseDiagonalMatrix<Real>::getBandwidth() const
 {
   return bandwidth;
 }
 
-void SparseDiagonalMatrix::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
+template<typename Real>
+void SparseDiagonalMatrix<Real>::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
 {
   r = *this * x;
 }
 
-std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface &matrix )
-{
-  return matrix.print(out);
-}
+//template std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface<double> &matrix );
+
+template class SparseDiagonalMatrix<double>;

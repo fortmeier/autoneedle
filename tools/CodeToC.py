@@ -51,6 +51,7 @@ def sympyToC( symname, symfunc, vectors=[], scalars=[]):
 		varstring+=","+",".join( " const Real& "+s for s in scalars )
 
 
+	c_code += "template<typename Real>\n"
 	c_code += "Real "+str(symname)+"("+varstring+" )\n"
 	c_code +=  "{\n"
 	for s in symbols:
@@ -82,6 +83,7 @@ def sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, matrixname ):
 
 	varstring = "int oX, int oY, "+matrixname+"& M, " + varstring
 
+	c_code += "template<typename Real>\n"
 	c_code += "void "+str(funcname)+"MatrixAdd("+varstring+" )\n"
 	c_code +=  "{\n"
 
@@ -94,7 +96,7 @@ def sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, matrixname ):
 	c_code += "}\n\n"
 	return c_code
 
-def sympyMatrixAdder(funcname, funcMat, vectors, scalars, matrixname=["Matrix", "BandMatrixInterface"]): 
+def sympyMatrixAdder(funcname, funcMat, vectors, scalars, matrixname=["MatrixDyn", "BandMatrixInterface<Real>"]): 
 	c_code = ""
 	for m in matrixname:
 		c_code += sympyMatrixAdderNamed(funcname, funcMat, vectors, scalars, m ) 

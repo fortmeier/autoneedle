@@ -32,6 +32,7 @@
  * auxilliary class that repersents a spring which is
  * attachted to a node of a needle
  */
+template<typename Real>
 class Spring
 {
 public:
@@ -43,9 +44,9 @@ public:
   /**
    * spring stiffness
    */
-  double k;
+  Real k;
 
-  Spring( Vector x = Vector(0,0,0), double k = 0);
+  Spring( Vector x = Vector(0,0,0), Real k = 0);
 };
 
 /**
@@ -78,35 +79,37 @@ public:
  *
  * [4]
  */
+template<typename Real>
 class BendingNeedleModel
 {
 private:
-  typedef cml::vectord NeedleVector;
+  typedef cml::vector<Real, cml::dynamic<> > NeedleVector;
+
   int numNodes;
-  NeedleMatrix A;
+  NeedleMatrix<Real> A;
   NeedleVector b;
 
-  NeedleMatrix::MatrixType dF_dx;
-  NeedleMatrix::MatrixType dF_dv;
+  typename NeedleMatrix<Real>::MatrixType dF_dx;
+  typename NeedleMatrix<Real>::MatrixType dF_dv;
 
   std::vector<Vector> nodes;
   std::vector<Vector> normals;
 
-  typedef std::map<int, Spring> SpringMap;
+  typedef std::map<int, Spring<Real> > SpringMap;
   SpringMap springs;
 
-  cml::vectord x; // positions from last step
-  cml::vectord v; // velocities from last step
-  cml::vectord ao; // accelerations from last step
-  cml::vectord ap; // accelerations from last step
+  VectorDyn x; // positions from last step
+  VectorDyn v; // velocities from last step
+  VectorDyn ao; // accelerations from last step
+  VectorDyn ap; // accelerations from last step
 
-  cml::vectord m; // accelerations from last step
+  VectorDyn m; // accelerations from last step
 
-  Vector calcF(int i, double k) const;
-  Vector calcFNext(int i, double k) const;
-  Vector calcFPrev(int i, double k) const;
-  Vector calcSpring(Vector a, Vector b, double k) const;
-  Vector calcSpringNoTangential(Vector a, Vector b, Vector n, double k) const;
+  Vector calcF(int i, Real k) const;
+  Vector calcFNext(int i, Real k) const;
+  Vector calcFPrev(int i, Real k) const;
+  Vector calcSpring(Vector a, Vector b, Real k) const;
+  Vector calcSpringNoTangential(Vector a, Vector b, Vector n, Real k) const;
 
   /**
    * use the conjugate gradient method to solve a system of
@@ -119,10 +122,10 @@ private:
   void updateSystemMatrix_A();
   void updateResultVector_b();
   void addForcesToB();
-  double updateStep();
+  Real updateStep();
 
-  double totaltime;
-  double dt;
+  Real totaltime;
+  Real dt;
 
   /**
    * indicates if the needle should output large
@@ -135,14 +138,14 @@ private:
   /**
    * needle Stiffness
    */
-  double kNeedle;
+  Real kNeedle;
 
-  double kBase;
+  Real kBase;
 
   /**
    * distance between two nodes
    */
-  double segmentLength;
+  Real segmentLength;
 
   /**
    * position of the needle base
@@ -160,7 +163,7 @@ private:
   Vector G;
 
 public:
-  BendingNeedleModel( double length, int nodes, double k );
+  BendingNeedleModel( Real length, int nodes, Real k );
 
   /**
    * Use the dynamic simulation.
@@ -171,14 +174,14 @@ public:
    * and the uses Newmark's method for the velocity and position update:
    * See [1].
    */
-  double simulateImplicitDynamic( double dt );
+  Real simulateImplicitDynamic( Real dt );
 
   /**
    * Use the static simulation.
    * This solves K * u = f
    * See [2].
    */
-  double simulateImplicitStatic( double dt );
+  Real simulateImplicitStatic( Real dt );
 
   /**
    * Adds a lagrange modifier to the node with index nodeIndex
@@ -196,7 +199,7 @@ public:
    * connects the node with index nodeIndex to a position pos
    * k is the spring stiffness constant
    */ 
-  void setSpring( int nodeIndex, Vector pos, double k );
+  void setSpring( int nodeIndex, Vector pos, Real k );
 
   /**
    * return a vector of the positions of the nodes of the
@@ -209,7 +212,7 @@ public:
    * distance between two adjacent nodes of the undeformed
    * needle
    */
-  double getSegmentLength( ) const;
+  Real getSegmentLength( ) const;
 
   /**
    * set the position of the base node of the needle
@@ -241,7 +244,7 @@ public:
   /**
    * calculate the total length of all segments of the needle
    */
-  double getTotalLength();
+  Real getTotalLength();
 
   /**
    * reset the needle to an undeformed configuration

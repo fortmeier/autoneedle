@@ -30,7 +30,8 @@
 #include "needle.h"
 #include "generatedCode.h"
 
-Spring::Spring( Vector _x, double _k ) :
+template<typename Real>
+Spring<Real>::Spring( Vector _x, Real _k ) :
   x( _x ),
   k( _k )
 {
@@ -38,8 +39,8 @@ Spring::Spring( Vector _x, double _k ) :
 }
 
 
-
-BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
+template<typename Real>
+BendingNeedleModel<Real>::BendingNeedleModel( Real length, int nNum, Real k ) :
   numNodes( nNum ),
   A( numNodes ),
   b( numNodes * 3),
@@ -56,7 +57,7 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
   debugOut( false ),
   kNeedle(k),
   kBase(2000),
-  segmentLength(length/(double)(numNodes-1)),
+  segmentLength(length/(Real)(numNodes-1)),
   baseDirection(1,0,0),
   basePosition(0,0,0),
   G(0, -9.81, 0)
@@ -81,7 +82,8 @@ BendingNeedleModel::BendingNeedleModel( double length, int nNum, double k ) :
 
 }
 
-Vector BendingNeedleModel::calcF(int i, double k) const
+template<typename Real>
+Vector BendingNeedleModel<Real>::calcF(int i, Real k) const
 {
   const std::vector<Vector>& x = nodes;
   Vector f = Vector(
@@ -92,7 +94,8 @@ Vector BendingNeedleModel::calcF(int i, double k) const
   return  f;
 }
 
-Vector BendingNeedleModel::calcFNext(int i, double k) const
+template<typename Real>
+Vector BendingNeedleModel<Real>::calcFNext(int i, Real k) const
 {
   const std::vector<Vector>& x = nodes;
   Vector f = Vector(
@@ -103,7 +106,8 @@ Vector BendingNeedleModel::calcFNext(int i, double k) const
   return  f;
 }
 
-Vector BendingNeedleModel::calcFPrev(int i, double k) const
+template<typename Real>
+Vector BendingNeedleModel<Real>::calcFPrev(int i, Real k) const
 {
   const std::vector<Vector>& x = nodes;
   Vector f = Vector(
@@ -114,7 +118,8 @@ Vector BendingNeedleModel::calcFPrev(int i, double k) const
   return  f;
 }
 
-Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k) const
+template<typename Real>
+Vector BendingNeedleModel<Real>::calcSpring(Vector a, Vector b, Real k) const
 {
   Vector f = Vector(
     spring_FSx(a,b,k),
@@ -124,7 +129,8 @@ Vector BendingNeedleModel::calcSpring(Vector a, Vector b, double k) const
   return  f;
 }
 
-Vector BendingNeedleModel::calcSpringNoTangential(Vector a, Vector b, Vector n, double k) const
+template<typename Real>
+Vector BendingNeedleModel<Real>::calcSpringNoTangential(Vector a, Vector b, Vector n, Real k) const
 {
   Vector f = Vector(
     springNoTangential_FSx(a,b,n,k),
@@ -135,8 +141,8 @@ Vector BendingNeedleModel::calcSpringNoTangential(Vector a, Vector b, Vector n, 
 }
 
 
-
-void BendingNeedleModel::cg()
+template<typename Real>
+void BendingNeedleModel<Real>::cg()
 {
   if(debugOut) std::cout<<"Starting CG"<<std::endl;
   cml::vectord x = ap;
@@ -149,16 +155,16 @@ void BendingNeedleModel::cg()
 
   cml::vectord p = r;
 
-  double rsold=cml::dot(r,r);
-  double rsnew;
+  Real rsold=cml::dot(r,r);
+  Real rsnew;
 
-  double eps = 0.000001;
+  Real eps = 0.000001;
   int i = 0;
   do {
     cml::vectord Ap = A * p;
     if(debugOut) std::cout<<"1:"<<p<<std::endl;
     if(debugOut) std::cout<<"2:"<<Ap<<std::endl;
-    double alpha = rsold/cml::dot(p,Ap);
+    Real alpha = rsold/cml::dot(p,Ap);
     x = x + alpha * p;
     r = r-alpha*Ap;
     rsnew = cml::dot(r,r);
@@ -175,7 +181,8 @@ void BendingNeedleModel::cg()
   }
 }
 
-void BendingNeedleModel::updateJacobianForce()
+template<typename Real>
+void BendingNeedleModel<Real>::updateJacobianForce()
 {
   dF_dx.zero();
   int n = numNodes;
@@ -231,7 +238,7 @@ void BendingNeedleModel::updateJacobianForce()
   } 
 
   //todo readd: spring_JacobianMatrixAdd( (n-1)*3, (n-1)*3, dF_dx, x[n-1], sX, kSpring ); 
-  for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
+  for( typename SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
   {
     int i = iter->first;
     if( i == 0 )
@@ -245,14 +252,15 @@ void BendingNeedleModel::updateJacobianForce()
 
 }
 
-void BendingNeedleModel::updateJacobianVelocity()
+template<typename Real>
+void BendingNeedleModel<Real>::updateJacobianVelocity()
 {
   //dF_dv = alphaC * M + betaC * dF_dx;
   // OK dF_dv = -50.5 * M + 0.005 * dF_dx;
   dF_dv.zero();
 
-  double alphaC = -0.0;
-  double betaC = 0.0;
+  Real alphaC = -0.0;
+  Real betaC = 0.0;
 
   for(int j = 0; j < dF_dv.getSize(); j++)
   {
@@ -267,7 +275,8 @@ void BendingNeedleModel::updateJacobianVelocity()
 
 }
 
-void BendingNeedleModel::updateSystemMatrix_A()
+template<typename Real>
+void BendingNeedleModel<Real>::updateSystemMatrix_A()
 {
   // fill A: 
   //    = M - dF_dx * dt * dt * beta - dF_dv* dt * gamma;
@@ -275,7 +284,7 @@ void BendingNeedleModel::updateSystemMatrix_A()
   {
     for(int i = 0; i < A.getSystemMatrix().getBandwidth(); i++)
     {
-      double a = -(dF_dx._at(i,j)* dt * dt * 0.25) - (dF_dv._at(i,j) * dt * 0.5);
+      Real a = -(dF_dx._at(i,j)* dt * dt * 0.25) - (dF_dv._at(i,j) * dt * 0.5);
       A.getSystemMatrix()._at(i,j) = a;
     }
     A.getSystemMatrix()(j,j) += m[j];
@@ -284,6 +293,7 @@ void BendingNeedleModel::updateSystemMatrix_A()
 
 }
 
+template<typename Real>
 void dOut( const cml::vectord& d, bool shuffle = false )
 {
   for(int i = 0; i < d.size() / 3; i++ )
@@ -303,7 +313,8 @@ void dOut( const cml::vectord& d, bool shuffle = false )
   }
 }
 
-void BendingNeedleModel::updateResultVector_b()
+template<typename Real>
+void BendingNeedleModel<Real>::updateResultVector_b()
 {
   // fill b: F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
   cml::vectord tmp = (( v + dt * ( 0.25 ) * ao ) * dt);
@@ -316,7 +327,8 @@ void BendingNeedleModel::updateResultVector_b()
 
 }
 
-void BendingNeedleModel::addForcesToB()
+template<typename Real>
+void BendingNeedleModel<Real>::addForcesToB()
 {
   // std::cout<<b<<std::endl;
   int n = numNodes;
@@ -354,7 +366,7 @@ void BendingNeedleModel::addForcesToB()
     b[numNodes*3+i]=0;
   }
 
-  for( SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
+  for( typename SpringMap::iterator iter = springs.begin(); iter != springs.end(); iter++) 
   {
     int i = iter->first;
     Vector fSpring;
@@ -371,12 +383,13 @@ void BendingNeedleModel::addForcesToB()
   if(debugOut) std::cout<<"b: "<<std::endl<<b<<std::endl;
 }
 
-double BendingNeedleModel::updateStep()
+template<typename Real>
+Real BendingNeedleModel<Real>::updateStep()
 {
   // length enforcement
   bool useEnforcement = false;
 
-  double error = 0;
+  Real error = 0;
   int n = numNodes;
   
   if(useEnforcement) 
@@ -409,9 +422,9 @@ double BendingNeedleModel::updateStep()
     int iz = ix + 2;
 
     // update std::vector x (giving x_plus)
-    double ux = dt * v[ix] + dt*dt*(0.25*ao[ix] + 0.25*ap[ix]);
-    double uy = dt * v[iy] + dt*dt*(0.25*ao[iy] + 0.25*ap[iy]);
-    double uz = dt * v[iz] + dt*dt*(0.25*ao[iz] + 0.25*ap[iz]);
+    Real ux = dt * v[ix] + dt*dt*(0.25*ao[ix] + 0.25*ap[ix]);
+    Real uy = dt * v[iy] + dt*dt*(0.25*ao[iy] + 0.25*ap[iy]);
+    Real uz = dt * v[iz] + dt*dt*(0.25*ao[iz] + 0.25*ap[iz]);
 
     x[ix] += ux;
     x[iy] += uy;
@@ -448,7 +461,7 @@ double BendingNeedleModel::updateStep()
       v[iy] -= dV[1];
       v[iz] -= dV[2];
 
-      double l = segmentLength;
+      Real l = segmentLength;
       Vector X0 = Vector(x[ix], x[iy], x[iz]);
       Vector X1 = Vector(x[ix-3], x[iy-3], x[iz-3]);
       Vector dX = N * ((X1-X0).length() - l);
@@ -487,7 +500,8 @@ double BendingNeedleModel::updateStep()
   return error;
 }
 
-double BendingNeedleModel::simulateImplicitDynamic( double _dt )
+template<typename Real>
+Real BendingNeedleModel<Real>::simulateImplicitDynamic( Real _dt )
 {
 
   dt = _dt;
@@ -495,7 +509,7 @@ double BendingNeedleModel::simulateImplicitDynamic( double _dt )
   int n = numNodes;
 
   /*
-      double offset = (sin(totaltime-3.141/2.0)+1.0)*2.5;
+      Real offset = (sin(totaltime-3.141/2.0)+1.0)*2.5;
       Vector sX = Vector(10,5,0);
       kSpring = offset / 10.0;
       */
@@ -503,7 +517,7 @@ double BendingNeedleModel::simulateImplicitDynamic( double _dt )
   //cml::vectord F(n*3+n); // sum of forces
   //cml::vectord b(n*3+n); // resulting vector for LSE
 
-  //double m = 0.001;
+  //Real m = 0.001;
 
   ao = ap;
   ap.zero();
@@ -525,7 +539,7 @@ double BendingNeedleModel::simulateImplicitDynamic( double _dt )
 
   if(debugOut) std::cout<<"A^-1 * b = ap = "<<ap<<std::endl;
 
-  double error = updateStep();
+  Real error = updateStep();
 
   if(debugOut) std::cout<<"x: "<<std::endl<<x<<std::endl;
   if(debugOut) std::cout<<"v: "<<std::endl<<v<<std::endl;
@@ -539,9 +553,10 @@ double BendingNeedleModel::simulateImplicitDynamic( double _dt )
   return error;
 }
 
-double BendingNeedleModel::simulateImplicitStatic( double _dt )
+template<typename Real>
+Real BendingNeedleModel<Real>::simulateImplicitStatic( Real _dt )
 {
-  double error = 0;
+  Real error = 0;
 
   dt = _dt;
   totaltime += dt;
@@ -598,7 +613,8 @@ double BendingNeedleModel::simulateImplicitStatic( double _dt )
   return error;
 }
 
-void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
+template<typename Real>
+void BendingNeedleModel<Real>::addLagrangeModifier( int nodeIndex, Vector N )
 {
   A.getLagrangeModifiers()[nodeIndex] = N;
   b.resize(numNodes * 3 + A.getLagrangeModifiers().size() );
@@ -609,25 +625,26 @@ void BendingNeedleModel::addLagrangeModifier( int nodeIndex, Vector N )
 
 }
 
-
-void BendingNeedleModel::setSpring( int nodeIndex, Vector pos, double k )
+template<typename Real>
+void BendingNeedleModel<Real>::setSpring( int nodeIndex, Vector pos, Real k )
 {
-  springs[nodeIndex] = Spring( pos, k );
+  springs[nodeIndex] = Spring<Real>( pos, k );
 }
 
-
-const std::vector<Vector>& BendingNeedleModel::getX() const
+template<typename Real>
+const std::vector<Vector>& BendingNeedleModel<Real>::getX() const
 {
   return nodes;
 }
 
-double BendingNeedleModel::getSegmentLength( ) const
+template<typename Real>
+Real BendingNeedleModel<Real>::getSegmentLength( ) const
 {
   return segmentLength;
 }
 
-
-void BendingNeedleModel::setBasePosition( const Vector& pos )
+template<typename Real>
+void BendingNeedleModel<Real>::setBasePosition( const Vector& pos )
 {
   basePosition = pos;
   //x[0] = basePosition[0];
@@ -645,7 +662,8 @@ void BendingNeedleModel::setBasePosition( const Vector& pos )
 
 }
 
-void BendingNeedleModel::setBaseDirection( const Vector& dir )
+template<typename Real>
+void BendingNeedleModel<Real>::setBaseDirection( const Vector& dir )
 {
   baseDirection = dir;
   baseDirection.normalize();
@@ -659,17 +677,19 @@ void BendingNeedleModel::setBaseDirection( const Vector& dir )
   //A.getLagrangeModifiers()[1] = baseDirection;
 }
 
-void BendingNeedleModel::setGravity( const Vector& g )
+template<typename Real>
+void BendingNeedleModel<Real>::setGravity( const Vector& g )
 {
   G = g;
 }
 
-Vector BendingNeedleModel::getBaseTorque() const
+template<typename Real>
+Vector BendingNeedleModel<Real>::getBaseTorque() const
 {
   if( springs.find(0) != springs.end() && springs.find(1) != springs.end() )
   {
-    const Spring& first = springs.find(0)->second;
-    const Spring& second = springs.find(1)->second;
+    const Spring<Real>& first = springs.find(0)->second;
+    const Spring<Real>& second = springs.find(1)->second;
     Vector lever =  first.x - second.x;
     Vector force = calcSpring(nodes[0], first.x, first.k);
     Vector torque = cml::cross(lever, force);
@@ -680,16 +700,17 @@ Vector BendingNeedleModel::getBaseTorque() const
   return Vector( 0, 0 ,0 );
 }
 
-Vector BendingNeedleModel::getBaseForce() const
+template<typename Real>
+Vector BendingNeedleModel<Real>::getBaseForce() const
 {
   return calcFNext(0,kNeedle) + calcF(1,kNeedle);
 }
 
 
-
-double BendingNeedleModel::getTotalLength()
+template<typename Real>
+Real BendingNeedleModel<Real>::getTotalLength()
 {
-  double l = 0;
+  Real l = 0;
   for(int i = 0; i < numNodes-1; i++)
   {
     l += (nodes[i]-nodes[i+1]).length();
@@ -697,11 +718,12 @@ double BendingNeedleModel::getTotalLength()
   return l;
 }
 
-void BendingNeedleModel::reset()
+template<typename Real>
+void BendingNeedleModel<Real>::reset()
 {
   for( int i = 0; i < numNodes; i++ )
   {
-    nodes[i] = (double)i * segmentLength * baseDirection + basePosition;
+    nodes[i] = (Real)i * segmentLength * baseDirection + basePosition;
     x[i*3+0] = nodes[i][0];
     x[i*3+1] = nodes[i][1];
     x[i*3+2] = nodes[i][2];
@@ -711,3 +733,6 @@ void BendingNeedleModel::reset()
     normals[i] = baseDirection.normalize() * -1.0;
   }
 }
+
+
+template class BendingNeedleModel<double>;

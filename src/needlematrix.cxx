@@ -29,15 +29,16 @@
 
 #include "needlematrix.h"
 
-
-NeedleMatrix::NeedleMatrix( int nNodes ) :
+template<typename Real>
+NeedleMatrix<Real>::NeedleMatrix( int nNodes ) :
   numNodes( nNodes ),
   A( numNodes*3, 19 )
 {
 
 }
 
-cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
+template<typename Real>
+cml::vectord NeedleMatrix<Real>::operator* (const cml::vectord& x) const
 {
   int numLagrangeModifiers = modifiers.size();
   //std::cout<<x.size()<<" vs. "<<numNodes * 3 + numLagrangeModifiers<<std::endl;
@@ -60,7 +61,7 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
   //std::cout<<"r2: "<<r<<std::endl;
   int n = numNodes;
   // add multiplication with lagrange modifiers
-  for( Modifiers::const_iterator iter = modifiers.begin(); iter != modifiers.end(); iter++ )
+  for( typename Modifiers::const_iterator iter = modifiers.begin(); iter != modifiers.end(); iter++ )
   {
     int i = iter->first;
     
@@ -120,14 +121,17 @@ cml::vectord NeedleMatrix::operator* (const cml::vectord& x) const
   return x;*/
 }
 
-BandMatrixInterface& NeedleMatrix::getSystemMatrix()
+template<typename Real>
+BandMatrixInterface<Real>& NeedleMatrix<Real>::getSystemMatrix()
 {
   return A;
 }
 
-NeedleMatrix::Modifiers& NeedleMatrix::getLagrangeModifiers()
+template<typename Real>
+typename NeedleMatrix<Real>::Modifiers& NeedleMatrix<Real>::getLagrangeModifiers()
 {
   return modifiers;
 }
 
 
+template class NeedleMatrix<double>;

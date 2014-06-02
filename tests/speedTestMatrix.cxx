@@ -4,8 +4,15 @@
 #include "sparsediagonalmatrixOpt.h"
 #include "sparsediagonalmatrix.h"
 
+typedef double Real;
 
-void speedTest( BandMatrixInterface& m, int reps, int mode )
+typedef BendingNeedleModel<Real> BendingNeedleModelD;
+typedef SparseDiagonalMatrix<Real> SparseDiagonalMatrixD;
+
+typedef SparseDiagonalMatrixOpt<Real> SparseDiagonalMatrixDOpt;
+typedef BandMatrixInterface<Real> BandMatrixInterfaceD;
+
+void speedTest( BandMatrixInterfaceD& m, int reps, int mode )
 {
   int size = m.getSize();
   cml::vectord x(size);
@@ -32,21 +39,21 @@ void speedTest( BandMatrixInterface& m, int reps, int mode )
   }
 }
 
-TEST(SpeedTest, SparseDiagonalMatrixOpt)
+TEST(SpeedTest, SparseDiagonalMatrixDOpt)
 {
-  SparseDiagonalMatrixOpt m(150,19);
+  SparseDiagonalMatrixDOpt m(150,19);
   speedTest( m, 100000, 0 );
 }
 
-TEST(SpeedTest, SparseDiagonalMatrixOptIntrinsics)
+TEST(SpeedTest, SparseDiagonalMatrixDOptIntrinsics)
 {
-  SparseDiagonalMatrixOpt m(150,19);
+  SparseDiagonalMatrixDOpt m(150,19);
   speedTest( m, 100000, 1 );
 }
 
-TEST(SpeedTest, SparseDiagonalMatrix)
+TEST(SpeedTest, SparseDiagonalMatrixD)
 {
-  SparseDiagonalMatrix m(150,19);
+  SparseDiagonalMatrixD m(150,19);
   speedTest( m, 100000, 0 );
 }
 
@@ -55,7 +62,7 @@ TEST(SpeedTest, SparseDiagonalMatrix)
 
 void speedTest2( int size, int reps, int mode )
 {
-  SparseDiagonalMatrixOpt m(size,19);
+  SparseDiagonalMatrixDOpt m(size,19);
 
   cml::vectord x(size);
 
@@ -81,12 +88,12 @@ void speedTest2( int size, int reps, int mode )
   }
 }
 
-TEST(SparseDiagonalMatrixOptTest, SpeedTest1)
+TEST(SparseDiagonalMatrixDOptTest, SpeedTest1)
 {
   speedTest2( 150, 100000, 0);
 }
 
-TEST(SparseDiagonalMatrixOptTest, SpeedTest2)
+TEST(SparseDiagonalMatrixDOptTest, SpeedTest2)
 {
   speedTest2( 150, 100000, 1);
 }

@@ -7,9 +7,17 @@ extern int sum( cml::vectord b );
 
 using namespace std;
 
-TEST(SparseDiagonalMatrixOptTest, Test15)
+typedef BendingNeedleModel<double> BendingNeedleModelD;
+typedef SparseDiagonalMatrix<double> SparseDiagonalMatrixD;
+
+typedef SparseDiagonalMatrixOpt<double> SparseDiagonalMatrixDOpt;
+typedef BandMatrixInterface<double> BandMatrixInterfaceD;
+
+typedef double Real;
+
+TEST(SparseDiagonalMatrixDOptTest, Test15)
 {
-  SparseDiagonalMatrixOpt m(30,15);
+  SparseDiagonalMatrixDOpt m(30,15);
 
   cml::vectord x(30);
 
@@ -31,9 +39,9 @@ TEST(SparseDiagonalMatrixOptTest, Test15)
   ASSERT_EQ(sum(b), 596);
 }
 
-TEST(SparseDiagonalMatrixOptTest, Test15b)
+TEST(SparseDiagonalMatrixDOptTest, Test15b)
 {
-  SparseDiagonalMatrixOpt m(31,15);
+  SparseDiagonalMatrixDOpt m(31,15);
 
   cml::vectord x(31);
 
@@ -55,9 +63,9 @@ TEST(SparseDiagonalMatrixOptTest, Test15b)
   ASSERT_EQ(sum(b), 656);
 }
 
-TEST(SparseDiagonalMatrixOptTest, Test17)
+TEST(SparseDiagonalMatrixDOptTest, Test17)
 {
-  SparseDiagonalMatrixOpt m(30,17);
+  SparseDiagonalMatrixDOpt m(30,17);
 
   cml::vectord x(30);
 
@@ -79,9 +87,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17)
   ASSERT_EQ(sum(b), 596);
 }
 
-TEST(SparseDiagonalMatrixOptTest, Test17b)
+TEST(SparseDiagonalMatrixDOptTest, Test17b)
 {
-  SparseDiagonalMatrixOpt m(29,17);
+  SparseDiagonalMatrixDOpt m(29,17);
 
   cml::vectord x(29);
 
@@ -103,9 +111,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
   ASSERT_EQ(sum(b), 560);
 }
 
-// TEST(SparseDiagonalMatrixOptTest, Test19)
+// TEST(SparseDiagonalMatrixDOptTest, Test19)
 // {
-//   SparseDiagonalMatrixOpt m(30,19);
+//   SparseDiagonalMatrixDOpt m(30,19);
 
 //   cml::vectord x(30);
 
@@ -127,9 +135,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
 //   ASSERT_EQ(sum(b), 596);
 // }
 
-// TEST(SparseDiagonalMatrixOptTest, Test21)
+// TEST(SparseDiagonalMatrixDOptTest, Test21)
 // {
-//   SparseDiagonalMatrixOpt m(30,21);
+//   SparseDiagonalMatrixDOpt m(30,21);
 
 //   cml::vectord x(30);
 
@@ -151,9 +159,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
 //   ASSERT_EQ(sum(b), 596);
 // }
 
-// TEST(SparseDiagonalMatrixOptTest, Test19b)
+// TEST(SparseDiagonalMatrixDOptTest, Test19b)
 // {
-//   SparseDiagonalMatrixOpt m(30,19);
+//   SparseDiagonalMatrixDOpt m(30,19);
 
 //   cml::vectord x(30);
 
@@ -178,9 +186,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
 // }
 
 
-// TEST(SparseDiagonalMatrixOptTest, MinimalWorkingExample)
+// TEST(SparseDiagonalMatrixDOptTest, MinimalWorkingExample)
 // {
-//   SparseDiagonalMatrixOpt m(9,5);
+//   SparseDiagonalMatrixDOpt m(9,5);
 //   m(8,8) = 1;
 //   cml::vectord x(9);
 //   for(int i = 0; i < 9; i++) 
@@ -262,9 +270,9 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
 
 // }
 
-// TEST(SparseDiagonalMatrixOptTest, SecondTest)
+// TEST(SparseDiagonalMatrixDOptTest, SecondTest)
 // {
-//   SparseDiagonalMatrixOpt m(9,5);
+//   SparseDiagonalMatrixDOpt m(9,5);
 
 //   cml::vectord x(9);
 
@@ -283,10 +291,10 @@ TEST(SparseDiagonalMatrixOptTest, Test17b)
 //   //cout<<b<<endl;
 // }
 
-TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality)
+TEST(SparseDiagonalMatrixDOptTest, TestMultiplicationEquality)
 {
   int size = 150;
-  SparseDiagonalMatrixOpt m(size,19);
+  SparseDiagonalMatrixDOpt m(size,19);
 
   cml::vectord x(size);
 
@@ -306,10 +314,10 @@ TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality)
   ASSERT_EQ(r1, r2);
 }
 
-TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality2)
+TEST(SparseDiagonalMatrixDOptTest, TestMultiplicationEquality2)
 {
   int size = 150;
-  SparseDiagonalMatrixOpt m(size,15);
+  SparseDiagonalMatrixDOpt m(size,15);
 
   cml::vectord x(size);
 
@@ -332,8 +340,8 @@ TEST(SparseDiagonalMatrixOptTest, TestMultiplicationEquality2)
 TEST(Bandmatrices, TestSumEquality1)
 {
   int size = 30;
-  SparseDiagonalMatrixOpt m1(size,15);
-  SparseDiagonalMatrix m2(size,15);
+  SparseDiagonalMatrixDOpt m1(size,15);
+  SparseDiagonalMatrixD m2(size,15);
 
   for(int i = 0; i < size; i++) 
   {
@@ -345,7 +353,7 @@ TEST(Bandmatrices, TestSumEquality1)
 }
 
 
-void subMatrixAdd3x3( BandMatrixInterface& m, int i, int j, int s = 0 )
+void subMatrixAdd3x3( BandMatrixInterfaceD& m, int i, int j, int s = 0 )
 {
   for(int x = 0; x < 3; x++ )
   {
@@ -356,7 +364,7 @@ void subMatrixAdd3x3( BandMatrixInterface& m, int i, int j, int s = 0 )
   }
 }
 
-void setMatrix( BandMatrixInterface& m, int n )
+void setMatrix( BandMatrixInterfaceD& m, int n )
 {
   for(int i = 0; i < n; i++)
   {
@@ -385,8 +393,8 @@ TEST(Bandmatrices, TestSumEquality2)
 {
   int nodes = 10;
   int size = nodes * 3;
-  SparseDiagonalMatrixOpt m1(size,19);
-  SparseDiagonalMatrix m2(size,19);
+  SparseDiagonalMatrixDOpt m1(size,19);
+  SparseDiagonalMatrixD m2(size,19);
 
   setMatrix( m1, nodes );
   setMatrix( m2, nodes );
@@ -426,8 +434,8 @@ TEST(Bandmatrices, TestSumEquality3)
 {
   int nodes = 30;
   int size = nodes * 3;
-  SparseDiagonalMatrixOpt m1(size,19);
-  SparseDiagonalMatrix m2(size,19);
+  SparseDiagonalMatrixDOpt m1(size,19);
+  SparseDiagonalMatrixD m2(size,19);
 
   setMatrix( m1, nodes );
   setMatrix( m2, nodes );
@@ -463,7 +471,7 @@ TEST(Bandmatrices, TestSumEquality3)
 }
 
 
-void subMatrixAdd3x3Rand( BandMatrixInterface& m, int i, int j )
+void subMatrixAdd3x3Rand( BandMatrixInterfaceD& m, int i, int j )
 {
   for(int x = 0; x < 3; x++ )
   {
@@ -474,7 +482,7 @@ void subMatrixAdd3x3Rand( BandMatrixInterface& m, int i, int j )
   }
 }
 
-void setMatrixRand( BandMatrixInterface& m, int n, int seed )
+void setMatrixRand( BandMatrixInterfaceD& m, int n, int seed )
 {
   srand(seed);
   for(int i = 0; i < n; i++)
@@ -504,8 +512,8 @@ TEST(Bandmatrices, TestSumEqualityRandom)
 {
   int nodes = 30;
   int size = nodes * 3;
-  SparseDiagonalMatrixOpt m1(size,19);
-  SparseDiagonalMatrix m2(size,19);
+  SparseDiagonalMatrixDOpt m1(size,19);
+  SparseDiagonalMatrixD m2(size,19);
 
   cml::vectord x(size);
 
@@ -544,9 +552,9 @@ TEST(Bandmatrices, TestSumEqualityRandom)
 
 }
 
-// TEST(SparseDiagonalMatrixOptTest, Test3)
+// TEST(SparseDiagonalMatrixDOptTest, Test3)
 // {
-//   SparseDiagonalMatrixOpt m(10,3);
+//   SparseDiagonalMatrixDOpt m(10,3);
 
 
 //   for(int i = 0; i < 10; i++) 
@@ -557,9 +565,9 @@ TEST(Bandmatrices, TestSumEqualityRandom)
 //   cout<<m<<endl;
 // }
 
-// TEST(SparseDiagonalMatrixOptTest, Test5)
+// TEST(SparseDiagonalMatrixDOptTest, Test5)
 // {
-//   SparseDiagonalMatrixOpt m(10,5);
+//   SparseDiagonalMatrixDOpt m(10,5);
 
 
 //   for(int i = 0; i < 10; i++) 
@@ -570,9 +578,9 @@ TEST(Bandmatrices, TestSumEqualityRandom)
 //   cout<<m<<endl;
 // }
 
-// TEST(SparseDiagonalMatrixOptTest, Test7)
+// TEST(SparseDiagonalMatrixDOptTest, Test7)
 // {
-//   SparseDiagonalMatrixOpt m(10,7);
+//   SparseDiagonalMatrixDOpt m(10,7);
 
 
 //   for(int i = 0; i < 10; i++) 

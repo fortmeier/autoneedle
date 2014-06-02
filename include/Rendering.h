@@ -51,7 +51,8 @@ class Rendering : public vtkCommand
     static Rendering *New();
  
 
-    void update( const std::vector<Vector> &x );
+    void updateDouble( const std::vector<cml::vector3d> &x );
+    void updateFloat( const std::vector<cml::vector3f> &x );
 
     void run();
 

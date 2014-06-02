@@ -29,7 +29,8 @@
 
 #include "sparsediagonalmatrixOpt.h"
 
-SparseDiagonalMatrixOpt::SparseDiagonalMatrixOpt( int m, int b ) :
+template<typename Real>
+SparseDiagonalMatrixOpt<Real>::SparseDiagonalMatrixOpt( int m, int b ) :
   size(m),
   bandwidth(b),
   bandwidth_2(b/2)
@@ -37,17 +38,19 @@ SparseDiagonalMatrixOpt::SparseDiagonalMatrixOpt( int m, int b ) :
 
   if( b < 3 || b % 2 != 1 ) throw std::runtime_error("bandwidth is smaller than 3 or odd");
 
-  values = new double[m*(bandwidth+1)];
+  values = new Real[m*(bandwidth+1)];
   zero();
 
 }
 
-SparseDiagonalMatrixOpt::~SparseDiagonalMatrixOpt()
+template<typename Real>
+SparseDiagonalMatrixOpt<Real>::~SparseDiagonalMatrixOpt()
 {
 	delete[] values;
 }
 
-int SparseDiagonalMatrixOpt::getOffset( int y ) const
+template<typename Real>
+int SparseDiagonalMatrixOpt<Real>::getOffset( int y ) const
 {
   int t1 =  (int)floor( bandwidth / 2.0 ) % 2;
   int t2 =  (int)ceil( bandwidth / 2.0 ) % 2;
@@ -56,8 +59,8 @@ int SparseDiagonalMatrixOpt::getOffset( int y ) const
   return a - b; 
 }
 
-
-void SparseDiagonalMatrixOpt::zero()
+template<typename Real>
+void SparseDiagonalMatrixOpt<Real>::zero()
 {
   for( int i = 0; i < bandwidth+1; i++ )
   {
@@ -68,7 +71,8 @@ void SparseDiagonalMatrixOpt::zero()
   }
 }
 
-std::ostream& SparseDiagonalMatrixOpt::print ( std::ostream &out ) const
+template<typename Real>
+std::ostream& SparseDiagonalMatrixOpt<Real>::print ( std::ostream &out ) const
 {
   out << std::endl;
   for( int j = 0; j < size; j++ )
@@ -92,17 +96,20 @@ std::ostream& SparseDiagonalMatrixOpt::print ( std::ostream &out ) const
   return out;
 }
 
-double& SparseDiagonalMatrixOpt::_at( int i, int j ) const
+template<typename Real>
+Real& SparseDiagonalMatrixOpt<Real>::_at( int i, int j ) const
 {
   return values[ i + (bandwidth+1)*j ];
 }
 
-double& SparseDiagonalMatrixOpt::operator() ( int i, int j ) const
+template<typename Real>
+Real& SparseDiagonalMatrixOpt<Real>::operator() ( int i, int j ) const
 {
   return _at(i-getOffset(j),j);
 }
 
-cml::vectord SparseDiagonalMatrixOpt::sumRows() const
+template<typename Real>
+cml::vectord SparseDiagonalMatrixOpt<Real>::sumRows() const
 {
   cml::vectord r(getSize());
   for( int j = 0; j < getSize(); j++ )
@@ -115,8 +122,8 @@ cml::vectord SparseDiagonalMatrixOpt::sumRows() const
   return r;
 }
 
-
-cml::vectord SparseDiagonalMatrixOpt::operator* (const cml::vectord& x) const
+template<typename Real>
+cml::vectord SparseDiagonalMatrixOpt<Real>::operator* (const cml::vectord& x) const
 {
   cml::vectord r(x.size());
   for(int j = 0; j < size; j++)
@@ -169,18 +176,20 @@ cml::vectord SparseDiagonalMatrixOpt::operator* (const cml::vectord& x) const
   return r;
 }
 
-int SparseDiagonalMatrixOpt::getSize() const
+template<typename Real>
+int SparseDiagonalMatrixOpt<Real>::getSize() const
 {
   return size;
 }
 
-
-int SparseDiagonalMatrixOpt::getBandwidth() const
+template<typename Real>
+int SparseDiagonalMatrixOpt<Real>::getBandwidth() const
 {
   return bandwidth;
 }
 
-void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
+template<typename Real>
+void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
 {
   // first, check if size of matrix and vectors are right:
   if( size != x.size() )
@@ -218,7 +227,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
       __m128d sum = _mm_add_pd( prod1, prod2 );
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      double res;
+      Real res;
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
@@ -260,7 +269,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
 
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      double res;
+      Real res;
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
@@ -302,7 +311,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
 
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      double res;
+      Real res;
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
@@ -339,7 +348,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
       __m128d sum = _mm_add_pd( prod1, prod2 );
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      double res;
+      Real res;
       _mm_store_sd( &res, red1 );
       //std::cout<<"res  "<<i<<":  "<<res<<std::endl;
 
@@ -399,7 +408,7 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
 
       //__m128d red2 = _mm_hadd_pd( red1, red1 );
 
-      double res;
+      Real res;
       _mm_store_sd( &res, red1 );
 
       r[j2] += res;
@@ -422,3 +431,5 @@ void SparseDiagonalMatrixOpt::multiplyWith( const cml::vectord& x, cml::vectord&
   }
 */
 }
+
+template class SparseDiagonalMatrixOpt<double>;

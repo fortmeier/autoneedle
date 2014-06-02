@@ -33,11 +33,12 @@
  * this class represents a combined matrix consisting of a
  * sparse (diagonal) matrix and Langrage modifiers.
  */
+template<typename Real>
 class NeedleMatrix
 {
 public:
-  typedef std::map<int, Vector > Modifiers;
-  typedef SparseDiagonalMatrixOpt MatrixType;
+  typedef std::map<int, Vector> Modifiers;
+  typedef SparseDiagonalMatrixOpt<Real> MatrixType;
 
 private:
   int numNodes;
@@ -51,7 +52,7 @@ public:
 
   NeedleMatrix( int numNodes );
   cml::vectord operator* (const cml::vectord& x) const;
-  BandMatrixInterface& getSystemMatrix();
+  BandMatrixInterface<Real>& getSystemMatrix();
   Modifiers& getLagrangeModifiers();
 
 };
