@@ -51,7 +51,7 @@ private:
 public:
 
   NeedleMatrix( int numNodes );
-  cml::vectord operator* (const cml::vectord& x) const;
+  VectorDyn operator* (const VectorDyn& x) const;
   BandMatrixInterface<Real>& getSystemMatrix();
   Modifiers& getLagrangeModifiers();
 

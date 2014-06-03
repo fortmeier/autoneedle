@@ -62,7 +62,7 @@ public:
    */
   virtual Real& _at(int i, int j) const = 0;
 
-  virtual cml::vectord operator* (const cml::vectord& x) const = 0;
+  virtual VectorDyn operator* (const VectorDyn& x) const = 0;
 
   virtual int getSize() const = 0;
   virtual int getBandwidth() const = 0;
@@ -70,7 +70,7 @@ public:
     /**
    * fast multiplication using intrincisc
    */
-  virtual void multiplyWith( const cml::vectord& x, cml::vectord& r ) const = 0;
+  virtual void multiplyWith( const VectorDyn& x, VectorDyn& r ) const = 0;
 
   virtual std::ostream& print ( std::ostream &out ) const = 0;
 

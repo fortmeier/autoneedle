@@ -37,6 +37,7 @@ private:
   int size;
   int bandwidth;
   int bandwidth_2;
+  int bandwidth_full;
   int offset;
 
   int getOffset( int y ) const;
@@ -49,14 +50,16 @@ public:
   /**
    * set the matrix to zero
    */
-  void zero();
+  virtual void zero();
+
+  virtual void zeroRow( int j );
 
   /**
    * access the matrix a position i,j
    */
   Real& operator() (int i, int j) const;
 
-  virtual cml::vectord sumRows() const;
+  virtual VectorDyn sumRows() const;
 
   
   /**
@@ -66,7 +69,7 @@ public:
    */
   Real& _at(int i, int j) const;
 
-  cml::vectord operator* (const cml::vectord& x) const;
+  VectorDyn operator* (const VectorDyn& x) const;
 
   //friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrixOpt &matrix );
 
@@ -78,6 +81,6 @@ public:
   /**
    * fast multiplication using intrincisc
    */
-  void multiplyWith( const cml::vectord& x, cml::vectord& r ) const;
+  void multiplyWith( const VectorDyn& x, VectorDyn& r ) const;
 
 };

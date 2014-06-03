@@ -28,6 +28,8 @@
 #define Vector cml::vector< Real, cml::fixed<3> >
 
 #define VectorDyn cml::vector< Real, cml::dynamic<> >
+#define VectorDouble cml::vector< double, cml::dynamic<> >
+#define VectorFloat cml::vector< float, cml::dynamic<> >
 //typedef cml::vector3d Vector;
 //typedef cml::vectord VectorDyn;
 

@@ -29,19 +29,45 @@
 
 #include "sparsediagonalmatrixOpt.h"
 
-template<typename Real>
-SparseDiagonalMatrixOpt<Real>::SparseDiagonalMatrixOpt( int m, int b ) :
+template<>
+SparseDiagonalMatrixOpt<double>::SparseDiagonalMatrixOpt( int m, int b ) :
   size(m),
   bandwidth(b),
   bandwidth_2(b/2)
 {
 
-  if( b < 3 || b % 2 != 1 ) throw std::runtime_error("bandwidth is smaller than 3 or odd");
+  if( b < 3 || b % 2 != 1 ) throw std::runtime_error("bandwidth is smaller than 3 or even");
 
-  values = new Real[m*(bandwidth+1)];
+  bandwidth_full = bandwidth + 1;
+  values = new double[m*(bandwidth_full)];
   zero();
 
 }
+
+template<>
+SparseDiagonalMatrixOpt<float>::SparseDiagonalMatrixOpt( int m, int b ) :
+  size(m),
+  bandwidth(b),
+  bandwidth_2(b/2)
+{
+
+  if( b < 3 || b % 2 != 1 ) throw std::runtime_error("bandwidth is smaller than 3 or even");
+
+  if( b+1 % 4 == 0 )
+  {
+    bandwidth_full = bandwidth + 1;
+  }
+  else
+  {
+    bandwidth_full = bandwidth + 3;
+  }
+
+  values = new float[m*(bandwidth_full)];
+
+  zero();
+
+}
+
 
 template<typename Real>
 SparseDiagonalMatrixOpt<Real>::~SparseDiagonalMatrixOpt()
@@ -62,7 +88,7 @@ int SparseDiagonalMatrixOpt<Real>::getOffset( int y ) const
 template<typename Real>
 void SparseDiagonalMatrixOpt<Real>::zero()
 {
-  for( int i = 0; i < bandwidth+1; i++ )
+  for( int i = 0; i < bandwidth_full; i++ )
   {
     for( int j = 0; j < size; j++ )
     {
@@ -95,7 +121,7 @@ std::ostream& SparseDiagonalMatrixOpt<Real>::print ( std::ostream &out ) const
     }
     int s = 0;
     if( o < 0) s = -o;
-    for( int i = s; i < bandwidth+1; i++ )
+    for( int i = s; i < bandwidth_full; i++ )
     {
       out << std::setw( 5 ) << _at(i,j);
     }
@@ -108,7 +134,7 @@ std::ostream& SparseDiagonalMatrixOpt<Real>::print ( std::ostream &out ) const
 template<typename Real>
 Real& SparseDiagonalMatrixOpt<Real>::_at( int i, int j ) const
 {
-  return values[ i + (bandwidth+1)*j ];
+  return values[ i + (bandwidth_full)*j ];
 }
 
 template<typename Real>
@@ -118,12 +144,12 @@ Real& SparseDiagonalMatrixOpt<Real>::operator() ( int i, int j ) const
 }
 
 template<typename Real>
-cml::vectord SparseDiagonalMatrixOpt<Real>::sumRows() const
+VectorDyn SparseDiagonalMatrixOpt<Real>::sumRows() const
 {
-  cml::vectord r(getSize());
+  VectorDyn r(getSize());
   for( int j = 0; j < getSize(); j++ )
   {
-    for( int i = 0; i < bandwidth+1; i++)
+    for( int i = 0; i < bandwidth_full; i++)
     {
       r[i] += _at(i, j);
     }
@@ -132,14 +158,14 @@ cml::vectord SparseDiagonalMatrixOpt<Real>::sumRows() const
 }
 
 template<typename Real>
-cml::vectord SparseDiagonalMatrixOpt<Real>::operator* (const cml::vectord& x) const
+VectorDyn SparseDiagonalMatrixOpt<Real>::operator* (const VectorDyn& x) const
 {
-  cml::vectord r(x.size());
+  VectorDyn r(x.size());
   for(int j = 0; j < size; j++)
   {
     r[j] = 0;
     int o = getOffset(j);
-    for( int i = 0; i < bandwidth + 1; i++) 
+    for( int i = 0; i < bandwidth_full; i++) 
     {
       int X = i + o;
       if( X >= 0 && X < size )
@@ -197,8 +223,8 @@ int SparseDiagonalMatrixOpt<Real>::getBandwidth() const
   return bandwidth;
 }
 
-template<typename Real>
-void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
+template<>
+void SparseDiagonalMatrixOpt<double>::multiplyWith( const VectorDouble& x, VectorDouble& r ) const
 {
   // first, check if size of matrix and vectors are right:
   if( size != x.size() )
@@ -211,8 +237,8 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
   //  throw std::runtime_error("size of matrix must be multiple of 2");
 
 
-  if ((this->bandwidth+1) % 4 != 0 ) 
-    throw std::runtime_error("fast multiplication only works with matrix with bandwidth+1 is multiple of 4");
+  if ((this->bandwidth_full) % 4 != 0 ) 
+    throw std::runtime_error("fast multiplication only works with matrix with bandwidth_full is multiple of 4");
   
   // now, do the multiplication
   const int o = getOffset(0);
@@ -224,7 +250,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
   for(int j = 0; j < -o; j++)
   {
     r[j] = 0;
-    for( int i = -k ; i < bandwidth + 1; i+=4) 
+    for( int i = -k ; i < bandwidth_full; i+=4) 
     {
       int X = i + k;
       __m128d matrixPart1 = _mm_load_pd( &_at(i,j) );
@@ -236,7 +262,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
       __m128d sum = _mm_add_pd( prod1, prod2 );
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      Real res;
+      double res;
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
@@ -252,7 +278,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
   for(int j = -o; j < size+o; j+=1)
   {
     r[j] = 0;
-    for( int i = 0; i < bandwidth + 1; i+=4) 
+    for( int i = 0; i < bandwidth_full; i+=4) 
     {
       int X = i + k;
       //r[j] += _at(i,j) * x[X];
@@ -278,7 +304,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
 
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      Real res;
+      double res;
       _mm_store_sd( &res, red1 );
 
       r[j] += res;
@@ -294,7 +320,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
   {
     r[j] = 0;
     r[j+1] = 0;
-    for( int i = 0; i < bandwidth + 1; i+=4) 
+    for( int i = 0; i < bandwidth_full; i+=4) 
     {
       int X = i + k;
       //r[j] += _at(i,j) * x[X];
@@ -357,7 +383,7 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
       __m128d sum = _mm_add_pd( prod1, prod2 );
       __m128d red1 = _mm_hadd_pd( sum, sum );
 
-      Real res;
+      double res;
       _mm_store_sd( &res, red1 );
       //std::cout<<"res  "<<i<<":  "<<res<<std::endl;
 
@@ -441,4 +467,149 @@ void SparseDiagonalMatrixOpt<Real>::multiplyWith( const cml::vectord& x, cml::ve
 */
 }
 
+template<>
+void SparseDiagonalMatrixOpt<float>::multiplyWith( const VectorFloat& x, VectorFloat& r ) const
+{
+
+  r = (*this) * x;
+  return;
+
+  // first, check if size of matrix and vectors are right:
+  if( size != x.size() )
+    throw std::runtime_error("size of x must be the same as matrix size");
+
+  if( size != r.size() )
+    throw std::runtime_error("size of r must be the same as matrix size");
+
+  //if( size%2 != 0 )
+  //  throw std::runtime_error("size of matrix must be multiple of 2");
+
+
+  if ((this->bandwidth_full) % 4 != 0 ) 
+    throw std::runtime_error("fast multiplication only works with matrix with bandwidth_full is multiple of 4");
+  
+  // now, do the multiplication
+  const int o = getOffset(0);
+  int k = o;
+
+  int mox = 0;
+
+  // first rows
+  std::cout<<"first rows"<<std::endl;
+  for(int j = 0; j < -o; j++)
+  {
+    r[j] = 0;
+    for( int i = -k ; i < bandwidth_full; i+=4) 
+    {
+      int X = i + k;
+      std::cout << i << " / " << X << std::endl;
+      __m128 matrixPart1 = _mm_load_ps( &_at(i,j) );
+      std::cout << i << " / " << X << std::endl;
+      __m128 vectorPart1 = _mm_load_ps( &x[X] );
+
+      __m128 r1 = _mm_mul_ps(matrixPart1, vectorPart1);
+      __m128 r2 = _mm_hadd_ps(r1, r1);
+      __m128 r3 = _mm_hadd_ps(r2, r2);
+
+      float res;
+      _mm_store_ss(&res, r3);
+
+      r[j] += res;
+      
+    }
+    if(j%2 == mox) k+=2;
+  }
+
+  #define USE_SINGLE_ROW_PROCESSING
+  #ifdef USE_SINGLE_ROW_PROCESSING
+
+  std::cout<<"middle part"<<std::endl;
+  // middle part
+  for(int j = -o; j < size+o; j+=1)
+  {
+    r[j] = 0;
+    for( int i = 0; i < bandwidth_full; i+=4) 
+    {
+      int X = i + k;
+      __m128 matrixPart1 = _mm_load_ps( &_at(i,j) );
+      __m128 vectorPart1 = _mm_load_ps( &x[X] );
+
+      __m128 r1 = _mm_mul_ps(matrixPart1, vectorPart1);
+      __m128 r2 = _mm_hadd_ps(r1, r1);
+      __m128 r3 = _mm_hadd_ps(r2, r2);
+
+      float res;
+      _mm_store_ss(&res, r3);
+
+      r[j] += res;
+      
+    }
+    if(j%2 == mox) k+=2;
+    //std::cout<<"="<<r[j]<<std::endl;
+  }
+
+#else  
+  // middle part
+  for(int j = -o; j < size+o; j+=2)
+  {
+    r[j] = 0;
+    r[j+1] = 0;
+    for( int i = 0; i < bandwidth_full; i+=4) 
+    {
+      int X = i + k;
+      __m128 matrixPart1 = _mm_load_ps( &_at(i,j) );
+      __m128 vectorPart1 = _mm_load_ps( &x[X] );
+
+      __m128 r1 = _mm_mul_ps(matrixPart1, vectorPart1);
+      __m128 r2 = _mm_hadd_ps(r1, r1);
+      __m128 r3 = _mm_hadd_ps(r2, r2);
+
+      float res;
+      _mm_store_ss(&res, r3);
+
+      r[j] += res;
+
+      // second row
+      __m128 matrixPart2 = _mm_load_ps( &_at(i,j+1) );
+      __m128 t1 = _mm_mul_ps(matrixPart2, vectorPart1);
+      __m128 t2 = _mm_hadd_ps(t1, t1);
+      __m128 t3 = _mm_hadd_ps(t2, t2);
+
+      float res2;
+      _mm_store_ss(&res2, t3);
+
+      r[j+1] += res2;
+
+    }
+    if(j%2 == mox) k+=2;
+    //std::cout<<"="<<r[j]<<std::endl;
+  }
+#endif
+
+  // end rows
+  for(int j = size+o; j < size; j++)
+  {
+    r[j] = 0;
+    for( int i = 0 ; i < size-k; i+=4) 
+    {
+      int X = i + k;
+      __m128 matrixPart1 = _mm_load_ps( &_at(i,j) );
+      __m128 vectorPart1 = _mm_load_ps( &x[X] );
+
+      __m128 r1 = _mm_mul_ps(matrixPart1, vectorPart1);
+      __m128 r2 = _mm_hadd_ps(r1, r1);
+      __m128 r3 = _mm_hadd_ps(r2, r2);
+
+      float res;
+      _mm_store_ss(&res, r3);
+
+      r[j] += res;
+      
+    }
+    if(j%2 == mox) k+=2;
+  }
+
+}
+
 template class SparseDiagonalMatrixOpt<double>;
+template class SparseDiagonalMatrixOpt<float>;

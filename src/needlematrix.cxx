@@ -38,7 +38,7 @@ NeedleMatrix<Real>::NeedleMatrix( int nNodes ) :
 }
 
 template<typename Real>
-cml::vectord NeedleMatrix<Real>::operator* (const cml::vectord& x) const
+VectorDyn NeedleMatrix<Real>::operator* (const VectorDyn& x) const
 {
   int numLagrangeModifiers = modifiers.size();
   //std::cout<<x.size()<<" vs. "<<numNodes * 3 + numLagrangeModifiers<<std::endl;
@@ -50,10 +50,10 @@ cml::vectord NeedleMatrix<Real>::operator* (const cml::vectord& x) const
 
   // first compute result of sparse diagonal matrix;
 #if 0  
-  cml::vectord r = A * x;
+  VectorDyn r = A * x;
 #else
   // use faster method
-  cml::vectord r(x.size());
+  VectorDyn r(x.size());
   A.multiplyWith(x, r);
 #endif
   //std::cout<<"r1: "<<r<<std::endl;
@@ -135,3 +135,4 @@ typename NeedleMatrix<Real>::Modifiers& NeedleMatrix<Real>::getLagrangeModifiers
 
 
 template class NeedleMatrix<double>;
+template class NeedleMatrix<float>;

@@ -4,7 +4,7 @@
 #include "sparsediagonalmatrixOpt.h"
 #include "sparsediagonalmatrix.h"
 
-typedef double Real;
+typedef float Real;
 
 typedef BendingNeedleModel<Real> BendingNeedleModelD;
 typedef SparseDiagonalMatrix<Real> SparseDiagonalMatrixD;
@@ -15,7 +15,7 @@ typedef BandMatrixInterface<Real> BandMatrixInterfaceD;
 void speedTest( BandMatrixInterfaceD& m, int reps, int mode )
 {
   int size = m.getSize();
-  cml::vectord x(size);
+  VectorDyn x(size);
 
   for(int i = 0; i < size; i++) 
   {
@@ -23,7 +23,7 @@ void speedTest( BandMatrixInterfaceD& m, int reps, int mode )
     m(i,i) = i;
   }
   
-  cml::vectord r(size);
+  VectorDyn r(size);
 
   for(int i = 0; i < reps; i++)
   {
@@ -64,7 +64,7 @@ void speedTest2( int size, int reps, int mode )
 {
   SparseDiagonalMatrixDOpt m(size,19);
 
-  cml::vectord x(size);
+  VectorDyn x(size);
 
   for(int i = 0; i < size; i++) 
   {
@@ -72,7 +72,7 @@ void speedTest2( int size, int reps, int mode )
     m(i,i) = i;
   }
   
-  cml::vectord r(size);
+  VectorDyn r(size);
 
   for(int i = 0; i < reps; i++)
   {

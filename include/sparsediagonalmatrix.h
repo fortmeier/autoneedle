@@ -89,7 +89,7 @@ public:
    */
   Real& _at(int i, int j) const;
 
-  cml::vectord operator* (const cml::vectord& x) const;
+  VectorDyn operator* (const VectorDyn& x) const;
 
   //friend std::ostream& operator<< ( std::ostream &out, const SparseDiagonalMatrix &matrix );
 
@@ -99,7 +99,7 @@ public:
     /**
    * fast multiplication using intrincisc
    */
-  void multiplyWith( const cml::vectord& x, cml::vectord& r ) const;
+  void multiplyWith( const VectorDyn& x, VectorDyn& r ) const;
 
   virtual std::ostream& print ( std::ostream &out ) const;
 

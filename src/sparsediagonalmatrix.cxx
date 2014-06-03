@@ -109,9 +109,9 @@ Real& SparseDiagonalMatrix<Real>::operator() ( int i, int j ) const
 }
 
 template<typename Real>
-cml::vectord SparseDiagonalMatrix<Real>::sumRows() const
+VectorDyn SparseDiagonalMatrix<Real>::sumRows() const
 {
-  cml::vectord r(getSize());
+  VectorDyn r(getSize());
   for( int j = 0; j < getSize(); j++ )
   {
     for( int i = 0; i < bandwidth; i++)
@@ -123,9 +123,9 @@ cml::vectord SparseDiagonalMatrix<Real>::sumRows() const
 }
 
 template<typename Real>
-cml::vectord SparseDiagonalMatrix<Real>::operator* (const cml::vectord& x) const
+VectorDyn SparseDiagonalMatrix<Real>::operator* (const VectorDyn& x) const
 {
-  cml::vectord r(x.size());
+  VectorDyn r(x.size());
 
   for(int j = 0; j < bandwidth_2+1; j++ )
   {
@@ -173,7 +173,7 @@ int SparseDiagonalMatrix<Real>::getBandwidth() const
 }
 
 template<typename Real>
-void SparseDiagonalMatrix<Real>::multiplyWith( const cml::vectord& x, cml::vectord& r ) const
+void SparseDiagonalMatrix<Real>::multiplyWith( const VectorDyn& x, VectorDyn& r ) const
 {
   r = *this * x;
 }
@@ -181,3 +181,4 @@ void SparseDiagonalMatrix<Real>::multiplyWith( const cml::vectord& x, cml::vecto
 //template std::ostream& operator<< ( std::ostream &out, const BandMatrixInterface<double> &matrix );
 
 template class SparseDiagonalMatrix<double>;
+template class SparseDiagonalMatrix<float>;

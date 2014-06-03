@@ -147,15 +147,15 @@ template<typename Real>
 void BendingNeedleModel<Real>::cg()
 {
   if(debugOut) std::cout<<"Starting CG"<<std::endl;
-  cml::vectord x = ap;
+  VectorDyn x = ap;
   if(debugOut) std::cout<<"b:"<<b<<std::endl;
   x.resize(b.size());
 
-  cml::vectord r = b - A * x;
+  VectorDyn r = b - A * x;
 
   if(debugOut) std::cout<<"r: "<<r<<std::endl;
 
-  cml::vectord p = r;
+  VectorDyn p = r;
 
   Real rsold=cml::dot(r,r);
   Real rsnew;
@@ -163,7 +163,7 @@ void BendingNeedleModel<Real>::cg()
   Real eps = 0.000001;
   int i = 0;
   do {
-    cml::vectord Ap = A * p;
+    VectorDyn Ap = A * p;
     if(debugOut) std::cout<<"1:"<<p<<std::endl;
     if(debugOut) std::cout<<"2:"<<Ap<<std::endl;
     Real alpha = rsold/cml::dot(p,Ap);
@@ -174,7 +174,7 @@ void BendingNeedleModel<Real>::cg()
     rsold=rsnew; 
     i++;
     //std::cout<<i<<": "<<rsnew<<std::endl;
-  } while (sqrt(rsnew) > eps && i < 10000);
+  } while (sqrt(rsnew) > eps && i < 200);
   if(debugOut) std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 
   //x.resize(ap.size());
@@ -358,7 +358,7 @@ void BendingNeedleModel<Real>::updateSystemMatrix_A()
 }
 
 template<typename Real>
-void dOut( const cml::vectord& d, bool shuffle = false )
+void dOut( const VectorDyn& d, bool shuffle = false )
 {
   for(int i = 0; i < d.size() / 3; i++ )
   {
@@ -381,7 +381,7 @@ template<typename Real>
 void BendingNeedleModel<Real>::updateResultVector_b()
 {
   // fill b: F + dt * dF_dx * ( v + dt * ( 0.5 - beta) * a ) + dF_dv * dt * (1-gamma) * a
-  cml::vectord tmp = (( v + dt * ( 0.25 ) * ao ) * dt);
+  VectorDyn tmp = (( v + dt * ( 0.25 ) * ao ) * dt);
   b  = dF_dx * tmp;
   //dOut(b);
   tmp = (ao * dt * 0.5);
@@ -578,8 +578,8 @@ Real BendingNeedleModel<Real>::simulateImplicitDynamic( Real _dt )
       kSpring = offset / 10.0;
       */
 
-  //cml::vectord F(n*3+n); // sum of forces
-  //cml::vectord b(n*3+n); // resulting vector for LSE
+  //VectorDyn F(n*3+n); // sum of forces
+  //VectorDyn b(n*3+n); // resulting vector for LSE
 
   //Real m = 0.001;
 
