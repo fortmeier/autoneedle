@@ -122,6 +122,7 @@ def secondDeriv( func, funcname, var1, var2, vectors, scalars, postfix =""):
        funcMat[i][j] = name
 
   code += CodeToC.sympyMatrixAdder( funcname+postfix, funcMat, vectors, scalars ) 
+  code += CodeToC.sympyMatrixSetter( funcname+postfix, funcMat, vectors, scalars ) 
 
   return code
 

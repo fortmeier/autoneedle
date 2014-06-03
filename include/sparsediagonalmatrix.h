@@ -71,14 +71,16 @@ public:
   /**
    * set the matrix to zero
    */
-  void zero();
+  virtual void zero();
+
+  virtual void zeroRow( int j );
 
   /**
    * access the matrix a position i,j
    */
   Real& operator() (int i, int j) const;
 
-  virtual cml::vectord sumRows() const;
+  virtual VectorDyn sumRows() const;
   
   /**
    * access the b x m matrix at position i,j

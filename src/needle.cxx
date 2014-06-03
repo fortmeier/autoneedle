@@ -33,7 +33,8 @@
 template<typename Real>
 Spring<Real>::Spring( Vector _x, Real _k ) :
   x( _x ),
-  k( _k )
+  k( _k ),
+  needsUpdate( true )
 {
 
 }
@@ -47,6 +48,7 @@ BendingNeedleModel<Real>::BendingNeedleModel( Real length, int nNum, Real k ) :
   dF_dx( numNodes*3, 19 ),
   dF_dv( numNodes*3, 19 ),
   nodes( numNodes ),
+  nodesLastUpdate( numNodes ), // position of node at last time of update of the needle matrix
   normals( numNodes ),
   x(numNodes*3), // positions from last step
   v(numNodes*3), // velocities from last step
@@ -245,6 +247,68 @@ void BendingNeedleModel<Real>::updateJacobianForce()
       spring_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, iter->second.k );
     else
       springNoTangential_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], iter->second.x, normals[i] , iter->second.k);
+  }
+  //dF_dx *= 1.0;
+  //dF_dx.transpose();
+  if(debugOut) std::cout<<"dF_dx: "<<std::endl<<dF_dx<<std::endl;
+
+}
+
+template<typename Real>
+void BendingNeedleModel<Real>::updateJacobianForceLazy()
+{
+  //dF_dx.zero();
+  int n = numNodes;
+  for(int i = 0; i < numNodes; i++)
+  {
+    std::vector<Vector>& x = nodes;
+    std::vector<Vector>& lx = nodesLastUpdate;
+    typename SpringMap::iterator spring = springs.find(i);
+
+    bool needsUpdate = false;
+
+    Real diff = (x[i]-lx[i]).length_squared();
+    //std::cout << i <<":"<< x[i] << " - " << lx[i] << " = " << diff << std::endl;
+    assert ( x[i] == x[i] );
+    if( diff > 0.001  ) needsUpdate = true;
+
+
+    if( spring != springs.end() && spring->second.needsUpdate ) needsUpdate = true;
+
+    if( needsUpdate == false ) continue;
+    //std::cout << "not next" << std::endl;
+
+    lx[i] = x[i];
+
+    dF_dx.zeroRow( i*3 + 0);
+    dF_dx.zeroRow( i*3 + 1);
+    dF_dx.zeroRow( i*3 + 2);
+    // pF_pxi
+    if(i>=2) needle_JacobianCCMatrixAdd(  i*3, i*3, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
+    if(i>=1 && i < n-1) needle_JacobianBBMatrixAdd(  i*3, i*3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=0 && i< n-2) needle_JacobianAAMatrixAdd(  i*3, i*3, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
+
+    // pF_pxi+1
+    if(i>=1 && i < n-1) needle_JacobianBCMatrixAdd(  i*3+3, i*3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=0 && i < n-2) needle_JacobianABMatrixAdd(  i*3+3, i*3, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
+
+    // pF_pxi+2
+    if(i>=0 && i < n-2) needle_JacobianACMatrixAdd(  i*3+6, i*3, dF_dx, x[i], x[i+1], x[i+2], kNeedle, segmentLength);
+
+    // pF_pxi-1
+    if(i>=1 && i < n-1) needle_JacobianBAMatrixAdd(  i*3-3, i*3, dF_dx, x[i-1], x[i], x[i+1], kNeedle, segmentLength);
+    if(i>=2 && i < n) needle_JacobianCBMatrixAdd(  i*3-3, i*3, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
+
+    // pF_pxi+2
+    if(i>=2 && i < n) needle_JacobianCAMatrixAdd(  i*3-6, i*3, dF_dx, x[i-2], x[i-1], x[i], kNeedle, segmentLength);
+
+    if( spring != springs.end())
+    {
+      if( i == 0 )
+        spring_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], spring->second.x, spring->second.k );
+      else
+        springNoTangential_JacobianMatrixAdd( i*3, i*3, dF_dx, nodes[i], spring->second.x, normals[i] , spring->second.k);
+    }
   }
   //dF_dx *= 1.0;
   //dF_dx.transpose();
@@ -564,7 +628,8 @@ Real BendingNeedleModel<Real>::simulateImplicitStatic( Real _dt )
   b.zero();
   A.getSystemMatrix().zero();
   // Set Matrix A
-  updateJacobianForce();
+  //updateJacobianForce();
+  updateJacobianForceLazy();
 
   for(int j = 0; j < dF_dx.getSize(); j++)
   {
@@ -731,8 +796,10 @@ void BendingNeedleModel<Real>::reset()
     springs.clear();
 
     normals[i] = baseDirection.normalize() * -1.0;
+    nodesLastUpdate[i] = Vector(10000, 10000, 10000);
   }
 }
 
 
 template class BendingNeedleModel<double>;
+template class BendingNeedleModel<float>;

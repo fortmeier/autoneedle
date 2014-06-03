@@ -57,6 +57,15 @@ void SparseDiagonalMatrix<Real>::zero()
 }
 
 template<typename Real>
+void SparseDiagonalMatrix<Real>::zeroRow( int j)
+{
+  for( int i = 0; i < bandwidth; i++ )
+  {
+    _at(i,j) = 0;
+  }
+}
+
+template<typename Real>
 std::ostream& SparseDiagonalMatrix<Real>::print ( std::ostream &out ) const
 {
   for( int j = 0; j < size; j++ )

@@ -46,6 +46,8 @@ public:
    */
   Real k;
 
+  bool needsUpdate;
+
   Spring( Vector x = Vector(0,0,0), Real k = 0);
 };
 
@@ -93,6 +95,8 @@ private:
   typename NeedleMatrix<Real>::MatrixType dF_dv;
 
   std::vector<Vector> nodes;
+  std::vector<Vector> nodesLastUpdate;
+
   std::vector<Vector> normals;
 
   typedef std::map<int, Spring<Real> > SpringMap;
@@ -104,6 +108,7 @@ private:
   VectorDyn ap; // accelerations from last step
 
   VectorDyn m; // accelerations from last step
+
 
   Vector calcF(int i, Real k) const;
   Vector calcFNext(int i, Real k) const;
@@ -118,6 +123,7 @@ private:
   void cg( );
 
   void updateJacobianForce();
+  void updateJacobianForceLazy();
   void updateJacobianVelocity();
   void updateSystemMatrix_A();
   void updateResultVector_b();

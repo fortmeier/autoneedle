@@ -35,17 +35,18 @@ public:
    * set the matrix to zero
    */
   virtual void zero() = 0;
+  virtual void zeroRow( int j ) = 0;
 
   /**
    * access the matrix a position i,j
    */
   virtual Real& operator() (int i, int j) const = 0;
 
-  virtual cml::vectord sumRows() const = 0;
+  virtual VectorDyn sumRows() const = 0;
 
   Real sum()
   {
-    cml::vectord s = sumRows();
+    VectorDyn s = sumRows();
     Real r = 0;
     for( int i = 0; i < getSize(); i++ )
     {
