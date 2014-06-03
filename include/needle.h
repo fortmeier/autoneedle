@@ -133,6 +133,9 @@ private:
   Real totaltime;
   Real dt;
 
+
+  bool use_lazy_update;
+
   /**
    * indicates if the needle should output large
    * amounts of debugging information

@@ -56,6 +56,7 @@ BendingNeedleModel<Real>::BendingNeedleModel( Real length, int nNum, Real k ) :
   ap(numNodes*3), // accelerations from last step
   m(numNodes*3), // mass of node in x y z direction
   totaltime( 0 ),
+  use_lazy_update( false ),
   debugOut( false ),
   kNeedle(k),
   kBase(2000),
@@ -174,7 +175,7 @@ void BendingNeedleModel<Real>::cg()
     rsold=rsnew; 
     i++;
     //std::cout<<i<<": "<<rsnew<<std::endl;
-  } while (sqrt(rsnew) > eps && i < 200);
+  } while (sqrt(rsnew) > eps && i < 2000);
   if(debugOut) std::cout<<"cg needed "<<i<<" iterations"<<std::endl;
 
   //x.resize(ap.size());
@@ -270,7 +271,7 @@ void BendingNeedleModel<Real>::updateJacobianForceLazy()
     Real diff = (x[i]-lx[i]).length_squared();
     //std::cout << i <<":"<< x[i] << " - " << lx[i] << " = " << diff << std::endl;
     assert ( x[i] == x[i] );
-    if( diff > 0.001  ) needsUpdate = true;
+    if( diff > 0.0000  ) needsUpdate = true;
 
 
     if( spring != springs.end() && spring->second.needsUpdate ) needsUpdate = true;
@@ -587,7 +588,10 @@ Real BendingNeedleModel<Real>::simulateImplicitDynamic( Real _dt )
   ap.zero();
 
   // fill the Jacobian dF_dx
-  updateJacobianForce();
+  if( use_lazy_update )
+    updateJacobianForceLazy();
+  else
+    updateJacobianForce();
 
   // fill the Jacobian dF_dv
   //dF_dv = alphaC * M + betaC * dF_dx;
@@ -628,8 +632,10 @@ Real BendingNeedleModel<Real>::simulateImplicitStatic( Real _dt )
   b.zero();
   A.getSystemMatrix().zero();
   // Set Matrix A
-  //updateJacobianForce();
-  updateJacobianForceLazy();
+  if( use_lazy_update )
+    updateJacobianForceLazy();
+  else
+    updateJacobianForce();
 
   for(int j = 0; j < dF_dx.getSize(); j++)
   {
